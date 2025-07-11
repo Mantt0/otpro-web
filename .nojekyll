@@ -1,0 +1,4 @@
+touch .nojekyll
+git add .nojekyll
+git commit -m "Agregar .nojekyll para evitar Jekyll"
+git push
