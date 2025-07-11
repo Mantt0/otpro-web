@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>OT Pro | Sigma Alimentos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0077b6">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <!-- Firebase & libs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- QR library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+</head>
+<body>
+
+<!-- Menú lateral con logo -->
+<nav class="sidebar">
+  <img src="logo-sigma.png" alt="Sigma Alimentos" class="logo-sigma">
+  <h2>OT Pro</h2>
+  <span id="userName" class="usuario-nombre"></span>
+  <button id="navNuevaOT">➕ Nueva OT</button>
+  <button id="navDashboard">📊 Dashboard</button>
+  <button id="navHistorial">📁 Historial</button>
+  <button id="navCalendario">📅 Calendario</button>
+  <button id="loginBtn"><i class="fas fa-user"></i> Iniciar sesión</button>
+  <button id="toggleMode">🌙 Modo oscuro</button>
+</nav>
+
+<div class="main-content">
+
+<section id="seccionFormulario">
+  <h1>📋 Registrar Orden de Trabajo</h1>
+  <form id="otForm" class="ot-form">
+
+    <!-- 🗓️ DATOS GENERALES --> 
+    <div class="form-section">
+      <h2>🗓️ Datos generales</h2> 
+      <div class="ot-grid">
+        <div class="ot-group"><label>Fecha</label><input name="fecha" type="date" required></div>
+        <div class="ot-group"><label>Área</label><input name="area" required></div>
+        <div class="ot-group"><label>Equipo</label><input name="equipo" required></div>
+      </div>
+    </div>
+
+    <!-- 🕒 TIEMPOS -->
+    <div class="form-section">
+      <h2>🕒 Tiempos</h2>
+      <div class="ot-grid">
+        <div class="ot-group"><label>Hora falla</label><input name="horaFalla" type="time"></div>
+        <div class="ot-group"><label>Hora notificación</label><input name="horaNotificacion" type="time"></div>
+        <div class="ot-group"><label>Hora inicio</label><input name="horaInicioReparacion" type="time"></div>
+        <div class="ot-group"><label>Hora fin</label><input name="horaFinReparacion" type="time"></div>
+        <div class="ot-group"><label>Tiempo total (min)</label><input name="tiempototal" id="tiempototal" disabled></div>
+      </div>
+    </div>
+
+    <!-- 🔧 INFORMACIÓN TÉCNICA -->
+    <div class="form-section">
+      <h2>🔧 Información técnica</h2>
+      <div class="ot-grid">
+        <div class="ot-group ot-wide"><label>Descripción de la falla</label><textarea name="descripcionFallaTecnica" required></textarea></div>
+        <div class="ot-group ot-wide"><label>Solución implementada</label><textarea name="solucionTecnica" required></textarea></div>
+      </div>
+    </div>
+
+    <!-- ⚙️ CONFIGURACIÓN BASE -->
+    <div class="form-section">
+      <h2>⚙️ Configuración OT</h2>
+      <div class="ot-grid">
+        <div class="ot-group">
+          <label>Tipo OT</label>
+          <select name="tipo">
+            <option value="Correctiva">Correctiva</option>
+            <option value="Preventiva">Preventiva</option>
+            <option value="Predictiva">Predictiva</option>
+          </select>
+        </div>
+        <div class="ot-group">
+          <label>Prioridad</label>
+          <select name="prioridad">
+            <option value="Alta">Alta</option>
+            <option value="Media">Media</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="campo">
+  <label for="categoriaFalla">Categoría</label>
+  <select name="categoriaFalla" id="categoriaFalla" required>
+    <option value="">Seleccione una categoría</option>
+    <option value="DESGASTE NATURAL">DESGASTE NATURAL</option>
+    <option value="DESGASTE FORZADO">DESGASTE FORZADO</option>
+    <option value="ERROR HUMANO">ERROR HUMANO</option>
+    <option value="MALA OPERACIÓN">MALA OPERACIÓN</option>
+    <option value="DISEÑO EQUIPO">DISEÑO EQUIPO</option>
+  </select>
+</div>
+   </div>
+    </div>
+
+    <!-- 🧼 SANITIZACIÓN -->
+    <div class="form-section">
+      <h2>🧼 Limpieza y sanitización</h2>
+      <div class="ot-grid">
+        <div class="ot-group ot-wide">
+          <label>¿Reparación en zona de contacto directo?</label>
+          <select name="zonaContacto" id="zonaContacto">
+            <option value="No">No</option>
+            <option value="Sí">Sí</option>
+          </select>
+        </div>
+        <div id="bloqueSanitizacion" class="hidden ot-grid">
+          <div class="ot-group"><label>Actividad de limpieza</label><input name="actividadLimpieza" type="text"></div>
+          <div class="ot-group"><label>Hora inicio limpieza</label><input name="horaInicioLimpieza" type="time"></div>
+          <div class="ot-group"><label>Hora fin limpieza</label><input name="horaFinLimpieza" type="time"></div>
+          <div class="ot-group"><label>Persona que limpia</label><input name="personaLimpieza" type="text"></div>
+          <div class="ot-group"><label>Inspección visual por</label><input name="inspeccionVisual" type="text"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🧪 VALIDACIÓN DE HIGIENE -->
+    <div class="form-section">
+      <h2>🧪 Validación</h2>
+      <div class="ot-grid">
+        <div class="ot-group">
+          <label>Tipo de limpieza</label>
+          <select name="tipoLimpieza">
+            <option value="LYS">LYS</option>
+            <option value="D">D</option>
+          </select>
+        </div>
+        <div class="ot-group">
+          <label>Resultado ATP</label>
+          <select name="resultadoATP">
+            <option value="Sí">Sí</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+      </div>
+    </div>
+   
+    <!-- 📁 FINAL -->
+    <div class="form-section">
+      <h2>📁 Información adicional</h2>
+      <div class="ot-grid">
+        <div class="ot-group"><label>Actividad de limpieza</label><input name="libre"></div>
+        <div class="ot-group"><label>Zonas de contacto</label><input name="zonas"></div>
+        <div class="ot-group">
+          <label>Estado</label>
+          <select name="estado">
+            <option value="Abierta">Abierta</option>
+            <option value="En progreso">En progreso</option>
+            <option value="Cerrada">Cerrada</option>
+          </select>
+        </div>
+        <div class="ot-group ot-wide"><label>Evidencia fotográfica (máx 5)</label><input type="file" name="evidencia" accept="image/*" multiple></div>
+      </div>
+    </div>
+ <!-- ✍️ FIRMAS -->
+    <div class="form-section">
+      <h2>✍️ Firmas</h2>
+      <div class="ot-grid">
+        <div class="ot-group"><label>Firma del técnico</label><input name="firmaTecnico" required></div>
+        <div class="ot-group"><label>Firma operador receptor</label><input name="firmaOperador" required></div>
+        <div class="ot-group"><label>Firma supervisor</label><input name="firmaSupervisor" required></div>
+      </div>
+    </div>
+    <button type="submit" class="ot-submit">💾 Guardar OT</button>
+  </form>
+</section>
+
+<!-- Sección Historial -->
+<section id="seccionHistorial" style="display: none;">
+  <h2>Historial OT</h2>
+  <div class="filtros-ot">
+    <input id="filtroEstado" placeholder="Estado">
+    <input id="filtroArea" placeholder="Área">
+    <input id="filtroFecha" type="date" placeholder="Fecha">
+    <button id="exportarZipBtn">📁 Exportar ZIP + Excel</button>
+  </div>
+  <table id="otTable">
+    <thead>
+  <tr>
+    <th># OT</th> <!-- 👈 NUEVA COLUMNA -->
+    <th>Fecha</th>
+    <th>Área</th>
+    <th>Equipo</th>
+    <th>Estado</th>
+    <th>Prioridad</th>
+    <th>Tipo</th>
+    <th>Tiempo</th>
+    <th>Acciones</th>
+  </tr>
+</thead>
+
+    <tbody></tbody>
+  </table>
+</section>
+
+<!-- Tablero Kanban -->
+<section id="seccionKanban">
+  <h2>Tablero Kanban</h2>
+  <div class="kanban-columns">
+    <div class="kanban-column" id="colAbierta"><h3>Abierta</h3><div class="kanban-list"></div></div>
+    <div class="kanban-column" id="colProgreso"><h3>En progreso</h3><div class="kanban-list"></div></div>
+    <div class="kanban-column" id="colCerrada"><h3>Cerrada</h3><div class="kanban-list"></div></div>
+  </div>
+</section>
+
+<!-- Dashboard KPI -->
+<section id="seccionDashboard" style="display: none;">
+  <h2>Dashboard</h2>
+  <div class="kpi-resumen">
+    Total OT: <span id="totalOt"></span> |
+    Abiertas: <span id="openOt"></span> |
+    En progreso: <span id="progressOt"></span> |
+    Cerradas: <span id="closedOt"></span> |
+    Retrasadas: <span id="lateOt"></span>
+  </div>
+  <!-- Gráficos Operativos -->
+<h3>Visualización avanzada</h3>
+<div class="chart-flex">
+  <div class="chart-container"><canvas id="chartEstado"></canvas></div>
+  <div class="chart-container"><canvas id="chartArea"></canvas></div>
+  <div class="chart-container wide"><canvas id="chartLinea"></canvas></div>
+</div>
+
+<h3>Análisis por tipo, prioridad, tiempo y categoría</h3> <!-- 🔄 Título actualizado -->
+<div class="chart-flex">
+  <div class="chart-container"><canvas id="chartTipoOT"></canvas></div>
+  <div class="chart-container"><canvas id="chartPrioridad"></canvas></div>
+  <div class="chart-container"><canvas id="chartPromedioTiempo"></canvas></div>
+  <div class="chart-container"><canvas id="chartCategoriaFalla"></canvas></div> <!-- ✅ NUEVA GRÁFICA -->
+</div>
+
+</section>
+
+<!-- Calendario -->
+<section id="seccionCalendario" style="display:none;">
+  <h2>Calendario de Mantenimiento</h2>
+  <div id="calendar"></div>
+</section>
+
+<!-- Modal QR -->
+<div id="qrModal" class="modal hidden">
+  <div class="modal-content">
+    <span id="closeQr" class="close">&times;</span>
+    <h3>QR del Equipo</h3>
+    <canvas id="qrCanvas"></canvas>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script defer src="main.js"></script>
+
+<script>
+  const database = firebase.database();
+
+  document.getElementById("formFalla").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this).entries());
+
+    // Guardar en tabla HTML
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${data.fecha}</td>
+      <td>${data.area}</td>
+      <td>${data.equipo}</td>
+      <td>${data.falla}</td>
+      <td>${data.horaInicio}</td>
+      <td>${data.horaFin}</td>
+      <td>${data.supervisor}</td>
+    `;
+    document.getElementById("tablaBody").appendChild(row);
+
+    // Guardar en localStorage
+    const reportes = JSON.parse(localStorage.getItem("reportes") || "[]");
+    reportes.push(data);
+    localStorage.setItem("reportes", JSON.stringify(reportes));
+
+    // Guardar en Firebase
+    database.ref("reportesFalla").push(data);
+
+    this.reset();
+    document.querySelector('select[name="equipo"]').innerHTML = "";
+  });
+</script>
+
+<script>
+  const inicioInput = document.querySelector('input[name="horaInicioReparacion"]');
+  const finInput = document.querySelector('input[name="horaFinReparacion"]');
+  const tiempoTotalInput = document.getElementById('tiempototal');
+
+  function calcularMinutos() {
+    const inicio = inicioInput.value;
+    const fin = finInput.value;
+
+    if (!inicio || !fin) return;
+
+    const [hInicio, mInicio] = inicio.split(':').map(Number);
+    const [hFin, mFin] = fin.split(':').map(Number);
+
+    const tInicio = hInicio * 60 + mInicio;
+    const tFin = hFin * 60 + mFin;
+
+    let totalMin = tFin - tInicio;
+    if (totalMin < 0) totalMin += 1440; // corrección para paso de medianoche
+
+    tiempoTotalInput.value = totalMin;
+  }
+
+  inicioInput.addEventListener('change', calcularMinutos);
+  finInput.addEventListener('change', calcularMinutos);
+</script>
+
+</body>
+</html>

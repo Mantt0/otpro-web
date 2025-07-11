@@ -1,0 +1,283 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  background: #f5f6f8;
+  color: #222;
+  transition: 0.3s;
+}
+
+.dark {
+  background: #121212;
+  color: #eee;
+}
+
+button, input, select, textarea {
+  font-size: 16px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+textarea {
+  resize: vertical;
+}
+
+h1, h2, h3 {
+  color: #0077b6;
+}
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 210px;
+  height: 100%;
+  background: #0077b6;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  margin: 10px 0 0;
+  font-size: 20px;
+}
+
+.sidebar button {
+  margin-top: 12px;
+  width: 100%;
+  background: #00b4d8;
+  border: none;
+  padding: 8px;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.logo-sigma {
+  width: 120px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+}
+
+.usuario-nombre {
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.main-content {
+  margin-left: 230px;
+  padding: 30px;
+}
+
+/* Formulario OT */
+.ot-form {
+  max-width: 960px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin: auto;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.form-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #ccc;
+  color: #333;
+}
+
+.ot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.ot-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.ot-group label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #555;
+}
+
+.ot-group input,
+.ot-group select,
+.ot-group textarea {
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+.ot-wide {
+  grid-column: span 2;
+}
+
+.ot-submit {
+  margin-top: 20px;
+  background: #00b4d8;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Tabla OT */
+#otTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: #fff;
+}
+
+#otTable th, #otTable td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+#otTable th {
+  background: #0077b6;
+  color: #fff;
+}
+
+/* Kanban */
+.kanban-columns {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.kanban-column {
+  flex: 1;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+  min-height: 300px;
+}
+
+.kanban-card {
+  background: #fff;
+  border-left: 6px solid #0077b6;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 6px;
+  cursor: grab;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.kanban-alert {
+  background: #ffe5e5;
+  border-left-color: red;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 30px;
+  padding: 12px 20px;
+  background: #0077b6;
+  color: #fff;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+.toast.hidden {
+  display: none;
+}
+
+/* Gráficas */
+.chart-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.chart-container {
+  flex: 1 1 340px;
+  min-width: 260px;
+  height: 300px;
+}
+
+.chart-container.wide {
+  flex: 2 1 700px;
+  height: 300px;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Calendario */
+#calendar {
+  max-width: 900px;
+  margin-top: 20px;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  position: relative;
+  text-align: center;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .sidebar {
+    width: 180px;
+  }
+  .main-content {
+    margin-left: 190px;
+    padding: 20px;
+  }
+}
