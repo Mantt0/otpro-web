@@ -281,3 +281,90 @@ h1, h2, h3 {
     padding: 20px;
   }
 }
+/* Configuración mejorada */
+.config-section {
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-bottom: 24px;
+  max-width: 960px;
+  margin-left: 230;
+  margin-right: auto;
+}
+
+.config-section h2 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: #0077b6;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 4px;
+}
+
+/* Tabla pequeña para configuración */
+.config-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: #fff;
+}
+
+.config-table th,
+.config-table td {
+  border: 1px solid #ddd;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.config-table th {
+  background: #0077b6;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Botones de acción dentro de la tabla */
+.config-table button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  margin: 0 4px;
+  padding: 0;
+}
+
+.config-table button:hover {
+  color: #00b4d8;
+}
+
+/* Formulario horizontal compacto */
+.config-form {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.config-form input,
+.config-form select {
+  font-size: 14px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 160px;
+  flex: 1;
+}
+
+/* Botón para guardar/editar elementos */
+.config-section .action-btn {
+  margin-top: 10px;
+  background: #00b4d8;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.config-table {
+  margin-left: 0;
+}

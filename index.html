@@ -34,6 +34,7 @@
   <button id="navDashboard">📊 Dashboard</button>
   <button id="navHistorial">📁 Historial</button>
   <button id="navCalendario">📅 Calendario</button>
+  <button id="navConfiguracion">⚙️ Configuración</button>
   <button id="loginBtn"><i class="fas fa-user"></i> Iniciar sesión</button>
   <button id="toggleMode">🌙 Modo oscuro</button>
 </nav>
@@ -49,8 +50,19 @@
       <h2>🗓️ Datos generales</h2> 
       <div class="ot-grid">
         <div class="ot-group"><label>Fecha</label><input name="fecha" type="date" required></div>
-        <div class="ot-group"><label>Área</label><input name="area" required></div>
-        <div class="ot-group"><label>Equipo</label><input name="equipo" required></div>
+        <div class="ot-group">
+  <label>Área</label>
+  <select name="area" id="selectArea" required>
+  <option value="">Seleccione Área</option>
+</select>
+</div>
+<div class="ot-group">
+  <label>Equipo</label>
+  <select name="equipo" id="selectEquipo" required>
+    <option value="">Seleccione Equipo</option>
+  </select>
+</div>
+
       </div>
     </div>
 
@@ -172,9 +184,25 @@
     <div class="form-section">
       <h2>✍️ Firmas</h2>
       <div class="ot-grid">
-        <div class="ot-group"><label>Firma del técnico</label><input name="firmaTecnico" required></div>
-        <div class="ot-group"><label>Firma operador receptor</label><input name="firmaOperador" required></div>
-        <div class="ot-group"><label>Firma supervisor</label><input name="firmaSupervisor" required></div>
+        <div class="ot-group">
+  <label>Firma del técnico</label>
+  <select name="firmaTecnico" id="selectFirmaTecnico" required>
+    <option value="">Seleccione Técnico</option>
+  </select>
+</div>
+<div class="ot-group">
+  <label>Firma operador receptor</label>
+  <select name="firmaOperador" id="selectFirmaOperador" required>
+    <option value="">Seleccione Operador</option>
+  </select>
+</div>
+<div class="ot-group">
+  <label>Firma supervisor</label>
+  <select name="firmaSupervisor" id="selectFirmaSupervisor" required>
+    <option value="">Seleccione Supervisor</option>
+  </select>
+</div>
+
       </div>
     </div>
     <button type="submit" class="ot-submit">💾 Guardar OT</button>
@@ -253,6 +281,115 @@
   <div id="calendar"></div>
 </section>
 
+<!-- Configuración de Catálogos -->
+<section id="seccionConfiguracion" style="display:none;">
+  <h2>⚙️ Configuración de Catálogos</h2>
+  <div class="config-tabs">
+    <button id="tabAreas">Áreas</button>
+    <button id="tabEquipos">Equipos</button>
+    <button id="tabUsuarios">Usuarios</button>
+  </div>
+  <div id="configContent">
+        <!-- ——— Áreas ——— -->
+<div id="sectionAreas" class="config-section">
+  <h3>Gestión de Áreas</h3>
+  <!-- Formulario para Agregar/Editar Área -->
+  <form id="formArea" class="config-form">
+    <label for="areaName">Nombre de Área:</label>
+    <input type="text" id="areaName" name="areaName" required>
+    <button type="submit" id="btnSaveArea">Guardar Área</button>
+    <button type="button" id="btnCancelArea" class="hidden">Cancelar edición</button>
+  </form>
+
+  <!-- Tabla de Áreas existentes -->
+  <table id="tableAreas" class="config-table">
+    <thead>
+      <tr>
+        <th>Nombre de Área</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+<!-- ——— Equipos ——— -->
+<div id="sectionEquipos" class="config-section hidden">
+  <h3>Gestión de Equipos</h3>
+
+  <!-- Formulario para Agregar/Editar Equipo -->
+  <form id="formEquipo" class="config-form">
+    <label for="equipoName">Nombre de Equipo:</label>
+    <input type="text" id="equipoName" name="equipoName" required>
+
+    <label for="equipoArea">Área:</label>
+    <select id="equipoArea" name="equipoArea" required>
+      <!-- Se llena dinámicamente -->
+    </select>
+
+    <button type="submit" id="btnSaveEquipo">Guardar Equipo</button>
+    <button type="button" id="btnCancelEquipo" class="hidden">Cancelar edición</button>
+  </form>
+
+  <!-- Tabla de Equipos existentes -->
+  <table id="tableEquipos" class="config-table">
+    <thead>
+      <tr>
+        <th>Equipo</th>
+        <th>Área</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- ——— Usuarios ——— -->
+<div id="sectionUsuarios" class="config-section hidden">
+  <h3>Gestión de Usuarios</h3>
+
+  <!-- Formulario para Agregar/Editar Usuario -->
+  <form id="formUsuario" class="config-form">
+    <label for="usuarioName">Nombre de Usuario:</label>
+    <input type="text" id="usuarioName" name="usuarioName" required>
+
+    <label for="usuarioRole">Rol:</label>
+    <select id="usuarioRole" name="usuarioRole" required>
+      <option value="">Seleccione rol</option>
+      <option value="tecnico">Técnico</option>
+      <option value="operador">Operador</option>
+      <option value="supervisor">Supervisor</option>
+    </select>
+
+    <div id="areaSelectorUsuario" class="hidden">
+      <label for="usuarioArea">Área (solo Operador):</label>
+      <select id="usuarioArea" name="usuarioArea">
+        <!-- Opciones dinámicas -->
+      </select>
+    </div>
+
+    <button type="submit" id="btnSaveUsuario">Guardar Usuario</button>
+    <button type="button" id="btnCancelUsuario" class="hidden">Cancelar edición</button>
+  </form>
+
+  <!-- Tabla de Usuarios existentes -->
+  <table id="tableUsuarios" class="config-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Rol</th>
+        <th>Área</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+
+  </div>
+</section>
+
+
 <!-- Modal QR -->
 <div id="qrModal" class="modal hidden">
   <div class="modal-content">
@@ -289,13 +426,21 @@
     `;
     document.getElementById("tablaBody").appendChild(row);
 
-    // Guardar en localStorage
-    const reportes = JSON.parse(localStorage.getItem("reportes") || "[]");
-    reportes.push(data);
-    localStorage.setItem("reportes", JSON.stringify(reportes));
+   // Convertir IDs en nombres legibles
+data.firmaTecnico    = document.querySelector('select[name="firmaTecnico"]').selectedOptions[0].textContent;
+data.firmaSupervisor = document.querySelector('select[name="firmaSupervisor"]').selectedOptions[0].textContent;
+data.firmaOperador   = document.querySelector('select[name="firmaOperador"]').selectedOptions[0].textContent;
+data.area            = document.querySelector('select[name="area"]').selectedOptions[0].textContent;
+data.equipo          = document.querySelector('select[name="equipo"]').selectedOptions[0].textContent;
 
-    // Guardar en Firebase
-    database.ref("reportesFalla").push(data);
+// Guardar en localStorage
+const reportes = JSON.parse(localStorage.getItem("reportes") || "[]");
+reportes.push(data);
+localStorage.setItem("reportes", JSON.stringify(reportes));
+
+// Guardar en Firebase
+database.ref("reportesFalla").push(data);
+
 
     this.reset();
     document.querySelector('select[name="equipo"]').innerHTML = "";
