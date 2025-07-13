@@ -368,3 +368,70 @@ h1, h2, h3 {
 .config-table {
   margin-left: 0;
 }
+/* ===================== RESPONSIVE MÓVIL ===================== */
+
+/* 1) Botón hamburguesa oculto en desktop, visible en móvil */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  font-size: 28px;
+  background: none;
+  border: none;
+  z-index: 1001;
+  color: #0077b6;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  /* Mostrar el botón */
+  .menu-toggle {
+    display: block;
+  }
+
+  /* Sidebar off-canvas por defecto */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 200px;
+  }
+
+  /* Cuando tenga la clase .open, aparece */
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Ajustes de layout */
+  .main-content {
+    margin-left: 0 !important;
+    padding: 20px;
+  }
+
+  /* Formularios en 1 columna */
+  .ot-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tablas scroll horizontales */
+  #otTable {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  #otTable th,
+  #otTable td {
+    min-width: 120px;
+  }
+
+  /* Kanban apilado vertical */
+  .kanban-columns {
+    flex-direction: column;
+  }
+
+  /* Gráficas más compactas */
+  .chart-container {
+    min-width: 100% !important;
+    height: 240px;
+  }
+}
