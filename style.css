@@ -385,12 +385,21 @@ h1, h2, h3 {
 }
 
 @media (max-width: 768px) {
+  /* Botón hamburguesa */
   .menu-toggle {
     display: block;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    font-size: 28px;
+    background: none;
+    border: none;
     z-index: 1001;
-    /* resto de estilos… */
+    cursor: pointer;
+    color: #0077b6;
   }
 
+  /* Sidebar off-canvas */
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
@@ -398,22 +407,24 @@ h1, h2, h3 {
     z-index: 1000;
   }
 
+  /* Al abrir */
   .sidebar.open {
     transform: translateX(0);
   }
 
-  /* Ajustes de layout */
+  /* Empujar contenido hacia abajo */
   .main-content {
     margin-left: 0 !important;
     padding: 20px;
+    padding-top: 60px;  /* ajusta este valor al alto de tu botón */
   }
 
-  /* Formularios en 1 columna */
+  /* Formularios a una sola columna */
   .ot-grid {
     grid-template-columns: 1fr !important;
   }
 
-  /* Tablas scroll horizontales */
+  /* Tablas con scroll horizontal */
   #otTable {
     display: block;
     overflow-x: auto;
