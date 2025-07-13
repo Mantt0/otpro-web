@@ -477,20 +477,42 @@ database.ref("reportesFalla").push(data);
   inicioInput.addEventListener('change', calcularMinutos);
   finInput.addEventListener('change', calcularMinutos);
 </script>
-  <!-- Toggle sidebar en móvil -->
+   <!-- Toggle sidebar en móvil y cierre automático -->
   <script>
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar    = document.querySelector('.sidebar');
-    menuToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('menuToggle');
+      const sb  = document.querySelector('.sidebar');
+
+      // 1) Al tocar ☰ abre o cierra el sidebar
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        sb.classList.toggle('open');
+      });
+
+      // 2) Al tocar fuera del sidebar, se cierra
+      document.addEventListener('click', e => {
+        if (sb.classList.contains('open')
+            && !sb.contains(e.target)
+            && e.target !== btn) {
+          sb.classList.remove('open');
+        }
+      });
+
+      // 3) Cada vez que tocas un botón del menú, se cierra
+      sb.querySelectorAll('button').forEach(b => {
+        b.addEventListener('click', () => sb.classList.remove('open'));
+      });
     });
   </script>
+
+  <!-- Lógica principal -->
+  <script defer src="main.js?v=1.0"></script>
 
   <!-- Lógica principal -->
   <script defer src="main.js?v=1.0"></script>
 </body>
 </html>
 
-<script defer src="main.js?v=1.1"></script>
+<script defer src="main.js?v=1.0"></script>
 </body>
 </html>

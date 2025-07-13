@@ -385,19 +385,19 @@ h1, h2, h3 {
 }
 
 @media (max-width: 768px) {
-  /* Mostrar el botón */
   .menu-toggle {
     display: block;
+    z-index: 1001;
+    /* resto de estilos… */
   }
 
-  /* Sidebar off-canvas por defecto */
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     width: 200px;
+    z-index: 1000;
   }
 
-  /* Cuando tenga la clase .open, aparece */
   .sidebar.open {
     transform: translateX(0);
   }
