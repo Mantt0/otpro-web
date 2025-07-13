@@ -68,12 +68,32 @@ function cargarPerfil(email) {
   });
 }
 
-function solicitarPermisoPush(){
-  messaging.requestPermission()
-    .then(() => messaging.getToken({ vapidKey: "YOUR_PUBLIC_VAPID_KEY" }))
-    .then(token => console.log("Push token:", token))
-    .catch(err => console.log("Sin permiso push", err));
+async function solicitarPermisoPush(){
+  try {
+    // 1) Pide permiso al usuario
+    const permiso = await Notification.requestPermission();
+    if (permiso !== 'granted') throw new Error('Permiso denegado');
+
+    // 2) Obtén el token FCM con tu VAPID key
+    const token = await messaging.getToken({
+      vapidKey: 'BDFWKmB-2U-fmJA-BG8x68xUk7A7jy1bcp4RgTQeYAodPNT6DWdlZnlMh_2KIlJJJ0Wls7-mh9YgjaJScJvSmoE'
+    });
+    console.log('Push token:', token);
+
+    // 3) Guarda el token en Realtime DB bajo tu usuario
+    const safeEmail = auth.currentUser.email.replace(/\./g, '%2E');
+    await db.ref(`tokens/${safeEmail}`).set(token);
+
+  } catch(err) {
+    console.warn('Error al solicitar permiso push:', err);
+  }
 }
+
+// Manejo de notificaciones en primer plano
+messaging.onMessage(payload => {
+  const { title, body, icon } = payload.notification;
+  new Notification(title, { body, icon });
+});
 // ==================== UI Navegación ====================-------------------------------------------------------------------
 const secciones = [
   "seccionFormulario","seccionDashboard","seccionHistorial",

@@ -27,6 +27,19 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 <body>
+  <body>
+  <!-- Registrar Service Worker para FCM -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW registrado:', reg.scope))
+        .catch(err => console.error('Error al registrar SW:', err));
+    }
+  </script>
+  <!-- BOTÓN HAMBURGUESA -->
+  <button id="menuToggle" class="menu-toggle">☰</button>
+  <!-- ... resto de tu contenido ... -->
+
 <!-- BOTÓN HAMBURGUESA: Mostrar/ocultar menú en móvil -->
   <button id="menuToggle" class="menu-toggle">☰</button>
 <!-- Menú lateral con logo -->
@@ -477,6 +490,8 @@ database.ref("reportesFalla").push(data);
   inicioInput.addEventListener('change', calcularMinutos);
   finInput.addEventListener('change', calcularMinutos);
 </script>
+
+
    <!-- Toggle sidebar en móvil y cierre automático -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -504,9 +519,9 @@ database.ref("reportesFalla").push(data);
       });
     });
   </script>
- 
-  <!-- Lógica principal -->
-  <script defer src="main.js?v=1.1.2"></script>
+
+   <!-- Lógica principal -->
+  <script defer src="main.js?v=1.0"></script>
 </body>
 </html>
 
