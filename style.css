@@ -518,14 +518,14 @@ h1, h2, h3 {
   /* Hacer que el modal ocupe casi toda la pantalla */
   #imageModal .modal-content {
     width: 95vw !important;
-    height: 55vh !important;
+    height: 35vh !important;
     padding: 0;
   }
 
   /* La imagen escalará al ancho del viewport */
   #imageModal img {
     max-width: 100% !important;
-    max-height: 55vh !important;
+    max-height: 35vh !important;
     object-fit: contain;
   }
 }
