@@ -518,7 +518,7 @@ h1, h2, h3 {
   /* Hacer que el modal ocupe casi toda la pantalla */
   #imageModal .modal-content {
     width: 95vw !important;
-    height: 95vh !important;
+    height: 60vh !important;
     padding: 0;
   }
 
@@ -556,27 +556,4 @@ h1, h2, h3 {
   .preview-wrapper {
     margin-bottom: 8px;
   }
-}
-/* ——— Auto‐size en Modal de Imagen Completa ——— */
-#imageModal {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#imageModal .modal-content {
-  display: inline-block;  /* para ajustar su ancho al contenido */
-  padding: 0;             /* elimina padding extra */
-  background: none;       /* deja transparente o ajusta según tu preferencia */
-  border-radius: 0;       /* opcional: quita bordes redondeados si no los quieres */
-}
-
-#imageModal img {
-  display: block;
-  margin: 0;
-  width: auto !important;
-  height: auto !important;
-  max-width: 90vw;   /* hasta el 90% del ancho de la pantalla */
-  max-height: 90vh;  /* hasta el 90% de la altura de la pantalla */
-  object-fit: contain;
 }
