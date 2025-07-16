@@ -22,6 +22,10 @@ let otList = [];
 let editKey = null;
 let perfilUsuario = { rol: "operador" };
 let charts = {};
+// Para edición: guardar URLs de evidencias existentes
+let existingEvidenciasAntes   = [];
+let existingEvidenciasDespues = [];
+
 
 // ==================== Select refs formulario OT (GLOBAL) ====================
 const selectArea            = document.getElementById("selectArea");
@@ -29,6 +33,12 @@ const selectEquipo          = document.getElementById("selectEquipo");
 const selectFirmaTecnico    = document.getElementById("selectFirmaTecnico");
 const selectFirmaOperador   = document.getElementById("selectFirmaOperador");
 const selectFirmaSupervisor = document.getElementById("selectFirmaSupervisor");
+const selectInspeccionVisual = document.getElementById("inspeccionVisual");
+const evidenciaAntesInput   = document.getElementById("evidenciaAntes");
+const evidenciaDespuesInput = document.getElementById("evidenciaDespues");
+const previewAntes          = document.getElementById("previewAntes");
+const previewDespues        = document.getElementById("previewDespues");
+
 // ==================== Auth ====================
 auth.onAuthStateChanged(user => {
   const loginBtn = document.getElementById("loginBtn");
@@ -46,6 +56,8 @@ auth.onAuthStateChanged(user => {
     cargarSelectAreasOT();
     cargarSelectUsuarios("tecnico", selectFirmaTecnico);
     cargarSelectUsuarios("supervisor", selectFirmaSupervisor);
+    cargarSelectUsuarios("inspector", selectInspeccionVisual);
+
   } else {
     loginBtn.style.display = "block";
     userName.textContent = "";
@@ -92,6 +104,8 @@ document.getElementById("navNuevaOT").addEventListener("click", () => {
   cargarSelectAreasOT();
   cargarSelectUsuarios("tecnico",   selectFirmaTecnico);
   cargarSelectUsuarios("supervisor", selectFirmaSupervisor);
+  cargarSelectUsuarios("inspector", selectInspeccionVisual);
+
 
   // Limpia dependientes
   selectEquipo.innerHTML        = '<option value="">Seleccione Equipo</option>';
@@ -476,72 +490,115 @@ async function borrarUsuario(key) {
   }
 }
 // ==================== Formulario OT ====================
-document.getElementById("otForm").addEventListener("submit", async e => {
+document.getElementById("otForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!auth.currentUser) return showToast("Debes iniciar sesión");
 
-  const data = new FormData(e.target);
-  const files = Array.from(e.target.evidencia.files).slice(0, 5);
+  if (!auth.currentUser) {
+    return showToast("Debes iniciar sesión");
+  }
+
+  const data     = new FormData(e.target);
   const numeroOT = await obtenerNumeroCorrelativo();
 
+  // Captura ID y nombre del inspector de calidad
+  const inspeId   = data.get("inspeccionVisual");
+  const inspeName = selectInspeccionVisual.selectedOptions[0].textContent;
+
+  // Construcción del objeto OT
   const ot = {
-  numeroOT,
-  fecha: data.get("fecha"),
-  areaId: data.get("area"),
-  equipoId: data.get("equipo"),
-  firmaTecnicoId: data.get("firmaTecnico"),
-  firmaOperadorId: data.get("firmaOperador"),
-  firmaSupervisorId: data.get("firmaSupervisor"),
+    numeroOT,
+    fecha: data.get("fecha"),
+    areaId: data.get("area"),
+    equipoId: data.get("equipo"),
+    firmaTecnicoId: data.get("firmaTecnico"),
+    firmaOperadorId: data.get("firmaOperador"),
+    firmaSupervisorId: data.get("firmaSupervisor"),
+    area: selectArea.selectedOptions[0].textContent,
+    equipo: selectEquipo.selectedOptions[0].textContent,
+    firmaTecnico: selectFirmaTecnico.selectedOptions[0].textContent,
+    firmaOperador: selectFirmaOperador.selectedOptions[0].textContent,
+    firmaSupervisor: selectFirmaSupervisor.selectedOptions[0].textContent,
+    horaFalla: data.get("horaFalla"),
+    horaNotificacion: data.get("horaNotificacion"),
+    horaInicioReparacion: data.get("horaInicioReparacion"),
+    horaFinReparacion: data.get("horaFinReparacion"),
+    tiempototal: data.get("tiempototal"),
+    descripcionFallaTecnica: data.get("descripcionFallaTecnica"),
+    solucionTecnica: data.get("solucionTecnica"),
+    tipo: data.get("tipo"),
+    prioridad: data.get("prioridad"),
+    categoriaFalla: data.get("categoriaFalla"),
+    zonaContacto: data.get("zonaContacto"),
+    actividadLimpieza: data.get("actividadLimpieza"),
+    horaInicioLimpieza: data.get("horaInicioLimpieza"),
+    horaFinLimpieza: data.get("horaFinLimpieza"),
+    personaLimpieza: data.get("personaLimpieza"),
+    inspeccionVisualId: inspeId,
+    inspeccionVisual: inspeName,
+    tipoLimpieza: data.get("tipoLimpieza"),
+    resultadoATP: data.get("resultadoATP"),
+    libre: data.get("libre"),
+    zonas: data.get("zonas"),
+    estado: data.get("estado"),
+    usuario: auth.currentUser.email,
+    timestamp: Date.now()
+  };
 
-  area: selectArea.selectedOptions[0].textContent,
-  equipo: selectEquipo.selectedOptions[0].textContent,
-  firmaTecnico: selectFirmaTecnico.selectedOptions[0].textContent,
-  firmaOperador: selectFirmaOperador.selectedOptions[0].textContent,
-  firmaSupervisor: selectFirmaSupervisor.selectedOptions[0].textContent,
+ // Captura y subida de evidencias (máx 2 antes + 2 después)
+  const filesAntes   = Array.from(evidenciaAntesInput.files).slice(0, 2);
+  const filesDespues = Array.from(evidenciaDespuesInput.files).slice(0, 2);
 
-  horaFalla: data.get("horaFalla"),
-  horaNotificacion: data.get("horaNotificacion"),
-  horaInicioReparacion: data.get("horaInicioReparacion"),
-  horaFinReparacion: data.get("horaFinReparacion"),
-  tiempototal: data.get("tiempototal"),
-  descripcionFallaTecnica: data.get("descripcionFallaTecnica"),
-  solucionTecnica: data.get("solucionTecnica"),
-  tipo: data.get("tipo"),
-  prioridad: data.get("prioridad"),
-  categoriaFalla: data.get("categoriaFalla"),
-  zonaContacto: data.get("zonaContacto"),
-  actividadLimpieza: data.get("actividadLimpieza"),
-  horaInicioLimpieza: data.get("horaInicioLimpieza"),
-  horaFinLimpieza: data.get("horaFinLimpieza"),
-  personaLimpieza: data.get("personaLimpieza"),
-  inspeccionVisual: data.get("inspeccionVisual"),
-  tipoLimpieza: data.get("tipoLimpieza"),
-  resultadoATP: data.get("resultadoATP"),
-  libre: data.get("libre"),
-  zonas: data.get("zonas"),
-  estado: data.get("estado"),
-  usuario: auth.currentUser.email,
-  timestamp: Date.now()
-};
+  // Empieza con las existentes (ya deduplicadas)
+  ot.evidenciasAntes   = [...existingEvidenciasAntes];
+  ot.evidenciasDespues = [...existingEvidenciasDespues];
 
-
-  const ref = editKey ? db.ref("ordenes/" + editKey) : db.ref("ordenes").push();
-  const key = ref.key;
-
-  if (files.length) {
-    ot.evidencias = [];
-    for (let i = 0; i < files.length; i++) {
-      const snap = await storage.ref(`evidencias/${key}_${i}`).put(files[i]);
-      ot.evidencias.push(await snap.ref.getDownloadURL());
+  // Subir “Antes”
+  for (const file of filesAntes) {
+    try {
+      const url = await subirImagenImgBB(file);
+      ot.evidenciasAntes.push(url);
+    } catch (err) {
+      console.error("Error ImgBB (antes):", err);
+      showToast("Error al subir imagen (antes)");
     }
   }
 
-  await ref.set(ot);
-  showToast(editKey ? "OT actualizada" : "OT registrada");
-  editKey = null;
-  e.target.reset();
-  renderFromRealtime();
+  // Subir “Después”
+  for (const file of filesDespues) {
+    try {
+      const url = await subirImagenImgBB(file);
+      ot.evidenciasDespues.push(url);
+    } catch (err) {
+      console.error("Error ImgBB (después):", err);
+      showToast("Error al subir imagen (después)");
+    }
+  }
+
+  // Finalmente deduplicar antes de guardar
+  ot.evidenciasAntes   = [...new Set(ot.evidenciasAntes)];
+  ot.evidenciasDespues = [...new Set(ot.evidenciasDespues)];
+
+  // Guardar en Firebase (nuevo o edición)
+  const ref = editKey ? db.ref("ordenes/" + editKey) : db.ref("ordenes").push();
+ await ref.set(ot);
+ showToast(editKey ? "OT actualizada" : "OT registrada");
+editKey = null;
+
+// 1) Resetear el formulario (incluye inputs de texto, selects y file inputs)
+e.target.reset();
+
+// 2) Limpiar explícitamente inputs de evidencia y previews
+evidenciaAntesInput.value   = "";
+evidenciaDespuesInput.value = "";
+previewAntes.innerHTML      = "";
+previewDespues.innerHTML    = "";
+
+// 3) Volver a renderizar lista y gráficos
+renderFromRealtime();
+
 });
+
+
 
 // ==================== Render, filtros y edición ====================
 async function renderFromRealtime() {
@@ -606,45 +663,89 @@ function renderTable(lista=otList){
     .forEach(b => b.onclick = () => showQR(b.dataset.equipo));
 }
 
-// ==================== Editar y eliminar OT ====================
+// ==================== Editar OT ====================
 async function editOT(id) {
   const o = otList.find(x => x._id === id);
   editKey = id;
   mostrarSeccion("seccionFormulario");
   const f = document.getElementById("otForm");
 
-  // Precargar listas que se necesitan antes de asignar valores
+  // 1) Precargar selects
   await cargarSelectAreasOT();
   await cargarSelectUsuarios("tecnico", selectFirmaTecnico);
   await cargarSelectUsuarios("supervisor", selectFirmaSupervisor);
+  await cargarSelectUsuarios("inspector", selectInspeccionVisual);
 
-  // Inputs simples
+  // 2) Poblar inputs simples
   for (const k in o) {
-    if (f[k] && !["area", "equipo", "firmaTecnico", "firmaSupervisor", "firmaOperador"].includes(k)) {
+    if (
+      f[k] &&
+      !["area","equipo","firmaTecnico","firmaSupervisor","firmaOperador","inspeccionVisual"].includes(k)
+    ) {
       f[k].value = o[k];
     }
   }
 
-  // Área y Equipo
+  // 3) Área y Equipo
   selectArea.value = o.areaId || "";
   await cargarSelectEquipos(o.areaId);
   selectEquipo.value = o.equipoId || "";
 
-  // Firmas
-  selectFirmaTecnico.value    = o.firmaTecnicoId || "";
-  selectFirmaSupervisor.value = o.firmaSupervisorId || "";
+  // 4) Firmas y Operador
+  selectFirmaTecnico.value   = o.firmaTecnicoId   || "";
+  selectFirmaSupervisor.value= o.firmaSupervisorId|| "";
   await cargarSelectUsuarios("operador", selectFirmaOperador, o.areaId);
-  selectFirmaOperador.value   = o.firmaOperadorId || "";
+  selectFirmaOperador.value  = o.firmaOperadorId  || "";
 
-  // Sanitización visual
-  if (o.zonaContacto === "Sí") {
-    document.getElementById("bloqueSanitizacion").classList.remove("hidden");
-  } else {
-    document.getElementById("bloqueSanitizacion").classList.add("hidden");
-  }
+  // 5) Inspector de calidad
+  selectInspeccionVisual.value = o.inspeccionVisualId || "";
+
+  // 6) Sanitización
+  f["zonaContacto"].value = o.zonaContacto || "No";
+  toggleLimpiezaFields();
+
+    // ——— Vistas previas de evidencias para edición ———
+  // 1) Trae y limpia
+  existingEvidenciasAntes   = [...new Set(o.evidenciasAntes   || [])];
+  existingEvidenciasDespues = [...new Set(o.evidenciasDespues || [])];
+  previewAntes.innerHTML    = "";
+  previewDespues.innerHTML  = "";
+
+  // 2) Renderizar “Antes”
+  existingEvidenciasAntes.forEach((url, idx) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "preview-wrapper";
+    const img = document.createElement("img");
+    img.src = url;
+    const btn = document.createElement("button");
+    btn.className = "remove-img-btn";
+    btn.textContent = "×";
+    btn.onclick = () => {
+      existingEvidenciasAntes.splice(idx, 1);
+      wrapper.remove();
+    };
+    wrapper.append(img, btn);
+    previewAntes.appendChild(wrapper);
+  });
+
+  // 3) Renderizar “Después” (idem)
+  existingEvidenciasDespues.forEach((url, idx) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "preview-wrapper";
+    const img = document.createElement("img");
+    img.src = url;
+    const btn = document.createElement("button");
+    btn.className = "remove-img-btn";
+    btn.textContent = "×";
+    btn.onclick = () => {
+      existingEvidenciasDespues.splice(idx, 1);
+      wrapper.remove();
+    };
+    wrapper.append(img, btn);
+    previewDespues.appendChild(wrapper);
+  });
+
 }
-
-
 
 function delOT(id){
   if(confirm("Eliminar OT?")) {
@@ -763,7 +864,92 @@ function showQR(equipo) {
   document.getElementById("closeQr").onclick = () => modal.classList.add("hidden");
 }
 
+// Referencias modal de imagen
+const imageModal       = document.getElementById("imageModal");
+const closeImageModal  = document.getElementById("closeImageModal");
+const modalImage       = document.getElementById("modalImage");
+
+// Cerrar modal de imagen
+closeImageModal.onclick = () => imageModal.classList.add("hidden");
+
+// Delegación de click en previews
+;[previewAntes, previewDespues].forEach(previewEl => {
+  if (!previewEl) return;
+  previewEl.addEventListener("click", e => {
+    if (e.target.tagName === "IMG") {
+      modalImage.src = e.target.src;
+      imageModal.classList.remove("hidden");
+    }
+  });
+});
+
+
 // ==================== Init ====================
 window.addEventListener("load", () => {
   mostrarSeccion("seccionDashboard");
 });
+const zonaSel = document.getElementById("zonaContacto");
+const bloque   = document.getElementById("bloqueSanitizacion");
+
+zonaSel.addEventListener("change", ({ target }) => {
+  // si target.value === "Sí" -> quitar .hidden / si es "No" -> añadir .hidden
+  bloque.classList.toggle("hidden", target.value === "No");
+});
+
+// Ejecuta una vez al cargar para respetar valor inicial (útil en edición)
+bloque.classList.toggle("hidden", zonaSel.value === "No");
+function toggleLimpiezaFields() {
+  const val = zonaSel.value;
+  bloque.classList.toggle("hidden", val === "No");
+}
+
+/**
+ * Muestra hasta `limit` vistas previas de los archivos seleccionados
+ */
+function previewImages(inputEl, previewEl, limit) {
+  previewEl.innerHTML = "";
+  Array.from(inputEl.files)
+       .slice(0, limit)
+       .forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement("img");
+      img.src = e.target.result;
+      previewEl.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Listeners de cambio para mostrar previews
+if (evidenciaAntesInput) {
+  evidenciaAntesInput.addEventListener("change", () =>
+    previewImages(evidenciaAntesInput, previewAntes, 2)
+  );
+}
+if (evidenciaDespuesInput) {
+  evidenciaDespuesInput.addEventListener("change", () =>
+    previewImages(evidenciaDespuesInput, previewDespues, 2)
+  );
+}
+
+
+// 📦 Subir imagen a ImgBB
+async function subirImagenImgBB(file) {
+  const apiKey = "7b5b75e47d139cbb56e8e3ab3c3623e8";
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await fetch("https://api.imgbb.com/1/upload?key=" + apiKey, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    return data.data.url;  // URL pública de la imagen
+  } else {
+    console.error("ImgBB error:", data);
+    throw new Error("Error al subir imagen");
+  }
+}

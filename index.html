@@ -46,7 +46,7 @@
 <div class="main-content">
 
 <section id="seccionFormulario">
-  <h1>📋 Registrar Orden de Trabajo</h1>
+  <h1 class="titulo-centro">📋 Registrar Orden de Trabajo</h1>
   <form id="otForm" class="ot-form">
 
     <!-- 🗓️ DATOS GENERALES --> 
@@ -74,11 +74,11 @@
     <div class="form-section">
       <h2>🕒 Tiempos</h2>
       <div class="ot-grid">
-        <div class="ot-group"><label>Hora falla</label><input name="horaFalla" type="time"></div>
-        <div class="ot-group"><label>Hora notificación</label><input name="horaNotificacion" type="time"></div>
+        <div class="ot-group"><label>Hora falla</label><input name="horaFalla" required type="time"></div>
+        <div class="ot-group"><label>Hora notificación</label><input name="horaNotificacion" required type="time"></div>
         <div class="ot-group"><label>Hora inicio</label><input name="horaInicioReparacion" type="time"></div>
         <div class="ot-group"><label>Hora fin</label><input name="horaFinReparacion" type="time"></div>
-        <div class="ot-group"><label>Tiempo total (min)</label><input name="tiempototal" id="tiempototal" disabled></div>
+        <div class="ot-group"><label>Tiempo total (min)</label><input name="tiempototal" id="tiempototal" readonly></div>
       </div>
     </div>
 
@@ -86,8 +86,8 @@
     <div class="form-section">
       <h2>🔧 Información técnica</h2>
       <div class="ot-grid">
-        <div class="ot-group ot-wide"><label>Descripción de la falla</label><textarea name="descripcionFallaTecnica" required></textarea></div>
-        <div class="ot-group ot-wide"><label>Solución implementada</label><textarea name="solucionTecnica" required></textarea></div>
+        <div class="ot-group ot-wide"><label>Descripción de la falla</label><textarea name="descripcionFallaTecnica" ></textarea></div>
+        <div class="ot-group ot-wide"><label>Solución implementada</label><textarea name="solucionTecnica" ></textarea></div>
       </div>
     </div>
 
@@ -113,7 +113,7 @@
         </div>
         <div class="campo">
   <label for="categoriaFalla">Categoría</label>
-  <select name="categoriaFalla" id="categoriaFalla" required>
+  <select name="categoriaFalla" id="categoriaFalla" >
     <option value="">Seleccione una categoría</option>
     <option value="DESGASTE NATURAL">DESGASTE NATURAL</option>
     <option value="DESGASTE FORZADO">DESGASTE FORZADO</option>
@@ -125,26 +125,43 @@
    </div>
     </div>
 
-    <!-- 🧼 SANITIZACIÓN -->
-    <div class="form-section">
-      <h2>🧼 Limpieza y sanitización</h2>
-      <div class="ot-grid">
-        <div class="ot-group ot-wide">
-          <label>¿Reparación en zona de contacto directo?</label>
-          <select name="zonaContacto" id="zonaContacto">
-            <option value="No">No</option>
-            <option value="Sí">Sí</option>
-          </select>
-        </div>
-        <div id="bloqueSanitizacion" class="hidden ot-grid">
-          <div class="ot-group"><label>Actividad de limpieza</label><input name="actividadLimpieza" type="text"></div>
-          <div class="ot-group"><label>Hora inicio limpieza</label><input name="horaInicioLimpieza" type="time"></div>
-          <div class="ot-group"><label>Hora fin limpieza</label><input name="horaFinLimpieza" type="time"></div>
-          <div class="ot-group"><label>Persona que limpia</label><input name="personaLimpieza" type="text"></div>
-          <div class="ot-group"><label>Inspección visual por</label><input name="inspeccionVisual" type="text"></div>
-        </div>
-      </div>
+   <!-- 🧼 SANITIZACIÓN -->
+<div class="form-section">
+  <h2>🧼 Limpieza y sanitización</h2>
+  <!-- TODO el contenido en un único grid -->
+  <div id="bloqueSanitizacion" class="hidden ot-grid">
+    <div class="ot-group">
+      <label for="zonaContacto">¿Reparación en zona de contacto?</label>
+      <select name="zonaContacto" id="zonaContacto">
+        <option value="No">No</option>
+        <option value="Sí">Sí</option>
+      </select>
     </div>
+    <div class="ot-group">
+      <label for="actividadLimpieza">Actividad de limpieza</label>
+      <input name="actividadLimpieza" id="actividadLimpieza" type="text">
+    </div>
+    <div class="ot-group">
+      <label for="personaLimpieza">Persona que limpia</label>
+      <input name="personaLimpieza" id="personaLimpieza" type="text">
+    </div>
+    <div class="ot-group">
+  <label for="inspeccionVisual">Inspección de Calidad</label>
+  <select name="inspeccionVisual" id="inspeccionVisual" >
+    <option value="">Seleccione Inspector</option>
+  </select>
+</div>
+    <div class="ot-group">
+      <label for="horaInicioLimpieza">Hora inicio limpieza</label>
+      <input name="horaInicioLimpieza" id="horaInicioLimpieza" type="time">
+    </div>
+    <div class="ot-group">
+      <label for="horaFinLimpieza">Hora fin limpieza</label>
+      <input name="horaFinLimpieza" id="horaFinLimpieza" type="time">
+    </div>
+  </div>
+</div>
+
 
     <!-- 🧪 VALIDACIÓN DE HIGIENE -->
     <div class="form-section">
@@ -155,6 +172,8 @@
           <select name="tipoLimpieza">
             <option value="LYS">LYS</option>
             <option value="D">D</option>
+            <option value="N/A">N/A</option>
+
           </select>
         </div>
         <div class="ot-group">
@@ -162,6 +181,7 @@
           <select name="resultadoATP">
             <option value="Sí">Sí</option>
             <option value="No">No</option>
+            <option value="N/A">N/A</option>
           </select>
         </div>
       </div>
@@ -181,7 +201,20 @@
             <option value="Cerrada">Cerrada</option>
           </select>
         </div>
-        <div class="ot-group ot-wide"><label>Evidencia fotográfica (máx 5)</label><input type="file" name="evidencia" accept="image/*" multiple></div>
+           <!-- ——— Evidencias Antes/Después ——— -->
+    <div class="ot-group">
+            <label for="evidenciaAntes"> 🕒 Evidencia Antes (máx 2)</label>
+      <input type="file" id="evidenciaAntes" name="evidenciaAntes"
+             accept="image/*" multiple>
+      <div id="previewAntes" class="image-preview"></div>
+    </div>
+    <div class="ot-group">
+      <label for="evidenciaDespues"> ✅ Evidencia Después (máx 2)</label>
+      <input type="file" id="evidenciaDespues" name="evidenciaDespues"
+             accept="image/*" multiple>
+      <div id="previewDespues" class="image-preview"></div>
+    </div>
+
       </div>
     </div>
  <!-- ✍️ FIRMAS -->
@@ -190,7 +223,7 @@
       <div class="ot-grid">
         <div class="ot-group">
   <label>Firma del técnico</label>
-  <select name="firmaTecnico" id="selectFirmaTecnico" required>
+  <select name="firmaTecnico" id="selectFirmaTecnico">
     <option value="">Seleccione Técnico</option>
   </select>
 </div>
@@ -273,6 +306,7 @@
 <div class="chart-flex">
   <div class="chart-container"><canvas id="chartTipoOT"></canvas></div>
   <div class="chart-container"><canvas id="chartPrioridad"></canvas></div>
+ 
   <div class="chart-container"><canvas id="chartCategoriaFalla"></canvas></div> <!-- ✅ NUEVA GRÁFICA -->
 </div>
 
@@ -361,6 +395,7 @@
       <option value="tecnico">Técnico</option>
       <option value="operador">Operador</option>
       <option value="supervisor">Supervisor</option>
+      <option value="inspector">Inspector de calidad</option>
     </select>
 
     <div id="areaSelectorUsuario" class="hidden">
@@ -392,6 +427,14 @@
   </div>
 </section>
 
+<!-- Modal de Imagen en Tamaño Real -->
+<div id="imageModal" class="modal hidden">
+  <div class="modal-content">
+    <span id="closeImageModal" class="close">&times;</span>
+    <img id="modalImage" src="" alt="Imagen completa"
+         style="max-width: 90vw; max-height: 90vh; object-fit: contain;">
+  </div>
+</div>
 
 <!-- Modal QR -->
 <div id="qrModal" class="modal hidden">
@@ -503,9 +546,6 @@ database.ref("reportesFalla").push(data);
       });
     });
   </script>
-  <!-- Lógica principal -->
-  <script defer src="main.js?v=1.1.8"></script>
+<script defer src="main.js?v=1.1.13"></script>
 </body>
 </html>
-
-

@@ -446,3 +446,71 @@ h1, h2, h3 {
     height: 240px;
   }
 }
+/* Oculta el gráfico de “Promedio de Tiempo” cuando está vacío */
+#chartPromedioTiempo {
+  display: none !important;
+}
+#bloqueSanitizacion {
+  grid-column: 1 / -1;             /* ocupa todo el ancho del padre */
+  display: grid;                   /* activa su propia grid */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+#bloqueSanitizacion input:disabled {
+  background-color: #e0e0e0;
+  color: #666;
+  cursor: not-allowed;
+}
+.titulo-centro {
+  text-align: center;
+}
+/* ——— Previews de Imágenes Antes/Después ——— */
+.image-preview {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-preview img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border: 2px solid #0077b6;
+  border-radius: 4px;
+}
+/* Previews con botón “X” para eliminar */
+.preview-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-right: 10px;
+}
+.preview-wrapper img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border: 2px solid #0077b6;
+  border-radius: 4px;
+}
+.remove-img-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(255,0,0,0.8);
+  border: none;
+  color: #fff;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  line-height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+/* Modal de Imagen Completa */
+#imageModal .modal-content {
+  max-width: auto;
+  padding: 10px;
+}
+#imageModal img {
+  display: block;
+  margin: auto;
+}
