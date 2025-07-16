@@ -518,7 +518,7 @@ h1, h2, h3 {
   /* Ajuste del contenedor del modal */
   #imageModal .modal-content {
     width: 95vw !important;
-    height: 95vh !important;
+    height: 60vh !important;
     padding: 0;
     display: flex;
     justify-content: center;
