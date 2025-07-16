@@ -529,3 +529,31 @@ h1, h2, h3 {
     object-fit: contain;
   }
 }
+@media (max-width: 768px) {
+  /* Asegura que el contenedor de cada grupo permita overflow */
+  .ot-group {
+    overflow: visible;
+  }
+
+  /* Forzar preview siempre visible, con scroll horizontal si falta espacio */
+  .image-preview {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px;
+    margin-top: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  /* Ajusta tamaño de miniaturas en móvil */
+  .image-preview img,
+  .preview-wrapper img {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  /* Un poco de espacio extra debajo */
+  .preview-wrapper {
+    margin-bottom: 8px;
+  }
+}
