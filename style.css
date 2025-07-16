@@ -515,17 +515,40 @@ h1, h2, h3 {
   margin: auto;
 }
 @media (max-width: 768px) {
-  /* Hacer que el modal ocupe casi toda la pantalla */
+  /* Ajuste del contenedor del modal */
   #imageModal .modal-content {
     width: 95vw !important;
     height: 95vh !important;
     padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
   }
 
-  /* La imagen escalará al ancho del viewport */
+  /* Imagen dentro del modal, adaptable a orientación */
   #imageModal img {
-    max-width: 100% !important;
-    max-height: 80vh !important;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
+    display: block;
+    margin: auto;
+  }
+
+  /* Botón de cierre adaptado a móvil */
+  #imageModal .close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 24px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    padding: 4px 10px;
   }
 }
+
