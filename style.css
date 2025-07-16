@@ -525,7 +525,7 @@ h1, h2, h3 {
   /* La imagen escalará al ancho del viewport */
   #imageModal img {
     max-width: 100% !important;
-    max-height: 80vh !important;
+    max-height: 60vh !important;
     object-fit: contain;
   }
 }
