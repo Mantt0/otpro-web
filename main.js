@@ -112,7 +112,11 @@ document.getElementById("navNuevaOT").addEventListener("click", () => {
   selectFirmaOperador.innerHTML = '<option value="">Seleccione Operador</option>';
 });
 document.getElementById("navDashboard").onclick  = () => mostrarSeccion("seccionDashboard");
-document.getElementById("navHistorial").onclick  = () => mostrarSeccion("seccionHistorial");
+document.getElementById("navHistorial").onclick  = () => {
+  mostrarSeccion("seccionHistorial");
+  document.getElementById("filtroEstado").value = "Abierta";
+  aplicarFiltros();
+};
 document.getElementById("navCalendario").onclick = () => {
   mostrarSeccion("seccionCalendario");
   renderCalendar();
@@ -540,6 +544,7 @@ document.getElementById("otForm").addEventListener("submit", async (e) => {
     libre: data.get("libre"),
     zonas: data.get("zonas"),
     estado: data.get("estado"),
+    numeroSAP: data.get("numeroSAP"),
     usuario: auth.currentUser.email,
     timestamp: Date.now()
   };
@@ -610,11 +615,38 @@ async function renderFromRealtime() {
     otList.push(o);
   });
 
+  cargarFiltrosAuto();
+  document.getElementById("filtroEstado").value = "Abierta";
   aplicarFiltros();
   renderKanban();
   renderGraficos();
   renderCalendar();
   updateKPI();
+}
+
+function cargarFiltrosAuto() {
+  const estadoSel = document.getElementById("filtroEstado");
+  const areaSel   = document.getElementById("filtroArea");
+
+  estadoSel.innerHTML = '<option value="">Todos los estados</option>';
+  areaSel.innerHTML   = '<option value="">Todas las áreas</option>';
+
+  const estados = [...new Set(otList.map(o => o.estado).filter(Boolean))];
+  const areas   = [...new Set(otList.map(o => o.area).filter(Boolean))];
+
+  estados.forEach(est => {
+    const opt = document.createElement("option");
+    opt.value = est;
+    opt.textContent = est;
+    estadoSel.appendChild(opt);
+  });
+
+  areas.forEach(ar => {
+    const opt = document.createElement("option");
+    opt.value = ar;
+    opt.textContent = ar;
+    areaSel.appendChild(opt);
+  });
 }
 
 ["filtroEstado","filtroArea","filtroFecha"].forEach(id =>{
@@ -634,34 +666,43 @@ function aplicarFiltros(){
   renderTable(filt);
 }
 
-function renderTable(lista=otList){
+function renderTable(lista = otList) {
   const tb = document.querySelector("#otTable tbody");
   tb.innerHTML = "";
   lista.forEach(o => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${o.numeroOT||"—"}</td>
+      <td>${o.numeroOT || "—"}</td>
       <td>${o.fecha}</td>
       <td>${o.area}</td>
       <td>${o.equipo}</td>
       <td>${o.estado}</td>
       <td>${o.prioridad}</td>
       <td>${o.tipo}</td>
-      <td>${o.tiempototal||"N/A"}</td>
+      <td>${o.tiempototal || "N/A"}</td>
       <td>
-        <button class="qr-btn"    data-equipo="${o.equipo}">🔗</button>
+        <button class="pdf-btn"   data-key="${o._id}">📄</button>
         <button class="edit-btn"  data-key="${o._id}">✏️</button>
         <button class="delete-btn"data-key="${o._id}">🗑️</button>
       </td>`;
     tb.appendChild(tr);
   });
+
+  // Eventos
   document.querySelectorAll(".edit-btn")
     .forEach(b => b.onclick = () => editOT(b.dataset.key));
   document.querySelectorAll(".delete-btn")
     .forEach(b => b.onclick = () => delOT(b.dataset.key));
   document.querySelectorAll(".qr-btn")
     .forEach(b => b.onclick = () => showQR(b.dataset.equipo));
+  document.querySelectorAll(".pdf-btn")
+    .forEach(b => b.onclick = () => {
+      const ot = otList.find(o => o._id === b.dataset.key);
+      if (!ot) return showToast("OT no encontrada");
+      exportOtToPDFDirect(ot); // ✅ nueva versión desacoplada
+    });
 }
+
 
 // ==================== Editar OT ====================
 async function editOT(id) {
@@ -703,6 +744,12 @@ async function editOT(id) {
   // 6) Sanitización
   f["zonaContacto"].value = o.zonaContacto || "No";
   toggleLimpiezaFields();
+
+  // Número de orden SAP
+if (f["numeroSAP"]) {
+  f["numeroSAP"].value = o.numeroSAP || "";
+}
+
 
     // ——— Vistas previas de evidencias para edición ———
   // 1) Trae y limpia
@@ -953,3 +1000,100 @@ async function subirImagenImgBB(file) {
     throw new Error("Error al subir imagen");
   }
 }
+// 3) Función exportOtToPDF en main.js
+
+async function exportOtToPDF() {
+  if (!editKey) return showToast("Entra en modo edición antes de exportar");
+  const ot = otList.find(o => o._id === editKey);
+  if (!ot) return showToast("OT no encontrada");
+
+  await exportOtToPDFDirect(ot); // Reutiliza la nueva función
+}
+
+
+async function exportOtToPDFDirect(ot) {
+  try {
+    const url   = "/ot-template.pdf";
+    const bytes = await fetch(url).then(r => {
+      if (!r.ok) throw new Error("Plantilla PDF no encontrada");
+      return r.arrayBuffer();
+    });
+
+    const pdfDoc = await PDFLib.PDFDocument.load(bytes);
+    const page   = pdfDoc.getPage(0);
+    const { width, height } = page.getSize();
+    const helv   = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+    const fontSize = 7;
+
+    function drawText(value, x, y) {
+      const text = value != null ? String(value) : "";
+      page.drawText(text, {
+        x,
+        y,
+        size: fontSize,
+        font: helv,
+        color: PDFLib.rgb(0, 0, 0),
+        maxWidth: 400
+      });
+    }
+
+    function drawParagraph(text, x, yStart, lineHeight = 12, maxChars = 90) {
+      if (!text) return;
+      const lines = String(text).split("\n").flatMap(line =>
+        line.length > maxChars
+          ? line.match(new RegExp(`.{1,${maxChars}}`, "g"))
+          : [line]
+      );
+      lines.forEach((line, i) => {
+        page.drawText(line.trim(), {
+          x,
+          y: yStart - i * lineHeight,
+          size: fontSize,
+          font: helv,
+          color: PDFLib.rgb(0, 0, 0)
+        });
+      });
+    }
+
+    // 🧭 Mapeo: usa tus coordenadas actuales
+    drawText(ot.fecha,                 25, height - 80);
+    drawText(ot.area,                  90, height - 80);
+    drawParagraph(ot.equipo,          150, height - 79, 7, 20);
+    drawParagraph(ot.firmaOperador,   255, height - 78, 7, 9);
+    drawParagraph(ot.firmaSupervisor, 310, height - 78, 7, 8);
+    drawText(ot.horaFalla,           430, height - 65);
+    drawText(ot.horaInicioReparacion,550, height - 65);
+    drawText(ot.horaNotificacion,    430, height - 80);
+    drawText(ot.horaFinReparacion,   550, height - 80);
+    drawText(ot.categoriaFalla,       35, height - 120);
+    drawText(ot.descripcionFallaTecnica, 160, height - 110);
+    drawText(ot.tiempototal + " min", 520, height - 97.5);
+    drawParagraph(ot.solucionTecnica,   35, height - 160, 11, 120);
+    drawText(ot.numeroSAP,           500, height - 160);
+    drawText(ot.libre,                45, height - 232);
+    drawText(ot.zonas,               110, height - 232);
+    drawText(ot.zonaContacto,        165, height - 232);
+    drawText(ot.horaInicioLimpieza,  215, height - 232);
+    drawText(ot.horaFinLimpieza,     270, height - 232);
+    drawText(ot.personaLimpieza,     310, height - 232);
+    drawParagraph(ot.inspeccionVisual, 365, height - 229, 7, 9);
+    drawText(ot.tipoLimpieza,        215, height - 420);
+    drawText(ot.resultadoATP,        560, height - 426);
+
+    const pdfBytes = await pdfDoc.save();
+    const blob     = new Blob([pdfBytes], { type: "application/pdf" });
+    const blobUrl  = URL.createObjectURL(blob);
+    window.open(blobUrl, "_blank");
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  } catch (err) {
+    console.error("Error exportando PDF directo:", err);
+    showToast("Error al exportar PDF");
+  }
+}
+
+
+// 8) Conecta el botón
+document
+  .getElementById("btnExportPdf")
+  .addEventListener("click", exportOtToPDF);
+

@@ -13,6 +13,8 @@
   <!-- FullCalendar -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 
+
+
   <!-- Firebase & libs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -23,6 +25,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- 1) Carga PDF-Lib (ponlo en tu index.txt) -->
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
   <!-- QR library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
@@ -91,39 +96,55 @@
       </div>
     </div>
 
-    <!-- ⚙️ CONFIGURACIÓN BASE -->
-    <div class="form-section">
-      <h2>⚙️ Configuración OT</h2>
-      <div class="ot-grid">
-        <div class="ot-group">
-          <label>Tipo OT</label>
-          <select name="tipo">
-            <option value="Correctiva">Correctiva</option>
-            <option value="Preventiva">Preventiva</option>
-            <option value="Predictiva">Predictiva</option>
-          </select>
-        </div>
-        <div class="ot-group">
-          <label>Prioridad</label>
-          <select name="prioridad">
-            <option value="Alta">Alta</option>
-            <option value="Media">Media</option>
-            <option value="Baja">Baja</option>
-          </select>
-        </div>
-        <div class="campo">
-  <label for="categoriaFalla">Categoría</label>
-  <select name="categoriaFalla" id="categoriaFalla" >
-    <option value="">Seleccione una categoría</option>
-    <option value="DESGASTE NATURAL">DESGASTE NATURAL</option>
-    <option value="DESGASTE FORZADO">DESGASTE FORZADO</option>
-    <option value="ERROR HUMANO">ERROR HUMANO</option>
-    <option value="MALA OPERACIÓN">MALA OPERACIÓN</option>
-    <option value="DISEÑO EQUIPO">DISEÑO EQUIPO</option>
-  </select>
-</div>
-   </div>
+ <!-- ⚙️ CONFIGURACIÓN OT -->
+<div class="form-section">
+  <h2>⚙️ Configuración OT</h2>
+  <div class="ot-grid">
+    <div class="ot-group">
+      <label>Tipo OT</label>
+      <select name="tipo">
+        <option value="Correctiva">Correctiva</option>
+        <option value="Preventiva">Preventiva</option>
+        <option value="Predictiva">Predictiva</option>
+      </select>
     </div>
+    <div class="ot-group">
+      <label>Prioridad</label>
+      <select name="prioridad">
+        <option value="Alta">Alta</option>
+        <option value="Media">Media</option>
+        <option value="Baja">Baja</option>
+      </select>
+    </div>
+    <div class="ot-group">
+      <label>Categoría</label>
+      <select name="categoriaFalla" id="categoriaFalla">
+        <option value="">Seleccione una categoría</option>
+        <option value="DESGASTE NATURAL">DESGASTE NATURAL</option>
+        <option value="DESGASTE FORZADO">DESGASTE FORZADO</option>
+        <option value="ERROR HUMANO">ERROR HUMANO</option>
+        <option value="MALA OPERACIÓN">MALA OPERACIÓN</option>
+        <option value="DISEÑO EQUIPO">DISEÑO EQUIPO</option>
+      </select>
+    </div>
+    <div class="ot-group">
+      <label>Estado</label>
+      <select name="estado">
+        <option value="Abierta">Abierta</option>
+        <option value="En progreso">En progreso</option>
+        <option value="Cerrada">Cerrada</option>
+      </select>
+    </div>
+    <div class="ot-group">
+      <label>Número de orden SAP</label>
+      <input
+        name="numeroSAP"
+        type="text"
+        placeholder="Ej: 4500XXXX"
+      />
+    </div>
+  </div>
+</div>
 
    <!-- 🧼 SANITIZACIÓN -->
 <div class="form-section">
@@ -138,8 +159,11 @@
       </select>
     </div>
     <div class="ot-group">
-      <label for="actividadLimpieza">Actividad de limpieza</label>
-      <input name="actividadLimpieza" id="actividadLimpieza" type="text">
+       <label>Actividad de limpieza</label>
+  <select name="actividadLimpieza">
+    <option value="Sí">Sí</option>
+    <option value="No">No</option>
+  </select>
     </div>
     <div class="ot-group">
       <label for="personaLimpieza">Persona que limpia</label>
@@ -170,10 +194,9 @@
         <div class="ot-group">
           <label>Tipo de limpieza</label>
           <select name="tipoLimpieza">
-            <option value="LYS">LYS</option>
+            <option value="LYS">LVS</option>
             <option value="D">D</option>
             <option value="N/A">N/A</option>
-
           </select>
         </div>
         <div class="ot-group">
@@ -187,36 +210,56 @@
       </div>
     </div>
    
-    <!-- 📁 FINAL -->
-    <div class="form-section">
-      <h2>📁 Información adicional</h2>
-      <div class="ot-grid">
-        <div class="ot-group"><label>Actividad de limpieza</label><input name="libre"></div>
-        <div class="ot-group"><label>Zonas de contacto</label><input name="zonas"></div>
-        <div class="ot-group">
-          <label>Estado</label>
-          <select name="estado">
-            <option value="Abierta">Abierta</option>
-            <option value="En progreso">En progreso</option>
-            <option value="Cerrada">Cerrada</option>
-          </select>
-        </div>
-           <!-- ——— Evidencias Antes/Después ——— -->
+   <!-- 📁 Información adicional -->
+<div class="form-section">
+  <h2>📁 Información adicional</h2>
+  <div class="ot-grid info-grid">
     <div class="ot-group">
-            <label for="evidenciaAntes"> 🕒 Evidencia Antes (máx 2)</label>
-      <input type="file" id="evidenciaAntes" name="evidenciaAntes"
-             accept="image/*" multiple>
+      <label>El área/equipos se entregan libres</label>
+      <select name="libre">
+        <option value="Sí">Sí</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+    <div class="ot-group">
+      <label>Zonas de contacto</label>
+      <select name="zonas">
+        <option value="Sí">Sí</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+  </div>  <!-- cierra .ot-grid info-grid -->
+</div>    <!-- cierra .form-section -->
+
+<!-- 🖼️ Evidencias -->
+<div class="form-section">
+  <h2>🖼️ Evidencias</h2>
+  <div class="ot-grid evidencias-grid">
+    <div class="ot-group">
+      <label for="evidenciaAntes">🕒 Evidencia Antes (máx 2)</label>
+      <input
+        type="file"
+        id="evidenciaAntes"
+        name="evidenciaAntes"
+        accept="image/*"
+        multiple
+      />
       <div id="previewAntes" class="image-preview"></div>
     </div>
     <div class="ot-group">
-      <label for="evidenciaDespues"> ✅ Evidencia Después (máx 2)</label>
-      <input type="file" id="evidenciaDespues" name="evidenciaDespues"
-             accept="image/*" multiple>
+      <label for="evidenciaDespues">✅ Evidencia Después (máx 2)</label>
+      <input
+        type="file"
+        id="evidenciaDespues"
+        name="evidenciaDespues"
+        accept="image/*"
+        multiple
+      />
       <div id="previewDespues" class="image-preview"></div>
     </div>
+  </div>  <!-- cierra .ot-grid evidencias-grid -->
+</div>    <!-- cierra .form-section -->
 
-      </div>
-    </div>
  <!-- ✍️ FIRMAS -->
     <div class="form-section">
       <h2>✍️ Firmas</h2>
@@ -229,7 +272,7 @@
 </div>
 <div class="ot-group">
   <label>Firma operador receptor</label>
-  <select name="firmaOperador" id="selectFirmaOperador" required>
+  <select name="firmaOperador" id="selectFirmaOperador" >
     <option value="">Seleccione Operador</option>
   </select>
 </div>
@@ -243,18 +286,26 @@
       </div>
     </div>
     <button type="submit" class="ot-submit">💾 Guardar OT</button>
+
+    
   </form>
 </section>
 
 <!-- Sección Historial -->
 <section id="seccionHistorial" style="display: none;">
   <h2>Historial OT</h2>
-  <div class="filtros-ot">
-    <input id="filtroEstado" placeholder="Estado">
-    <input id="filtroArea" placeholder="Área">
-    <input id="filtroFecha" type="date" placeholder="Fecha">
-    <button id="exportarZipBtn">📁 Exportar ZIP + Excel</button>
-  </div>
+ <div class="filtros-ot">
+  <select id="filtroEstado">
+    <option value="">Todos los estados</option>
+  </select>
+
+  <select id="filtroArea">
+    <option value="">Todas las áreas</option>
+  </select>
+
+  <input id="filtroFecha" type="date" placeholder="Fecha">
+  <button id="exportarZipBtn">📁 Exportar ZIP + Excel</button>
+</div>
   <table id="otTable">
     <thead>
   <tr>
@@ -546,6 +597,6 @@ database.ref("reportesFalla").push(data);
       });
     });
   </script>
-<script defer src="main.js?v=1.4.1"></script>
+<script defer src="main.js?v=1.1.15"></script>
 </body>
 </html>

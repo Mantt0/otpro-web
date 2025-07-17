@@ -552,3 +552,14 @@ h1, h2, h3 {
   }
 }
 
+/* ——— Grid de 2 columnas para evidencias ——— */
+.evidencias-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+@media (max-width: 768px) {
+  .evidencias-grid {
+    grid-template-columns: 1fr;
+  }
+}
