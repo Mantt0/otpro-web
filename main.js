@@ -1013,7 +1013,7 @@ async function exportOtToPDF() {
 
 async function exportOtToPDFDirect(ot) {
   try {
-    const url = `${location.origin}${location.pathname.replace(/\/[^\/]*$/, "/ot-template.pdf")}`;
+    const url = "./ot-template.pdf";
     const bytes = await fetch(url).then(r => {
       if (!r.ok) throw new Error("Plantilla PDF no encontrada");
       return r.arrayBuffer();
