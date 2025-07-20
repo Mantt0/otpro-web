@@ -1556,7 +1556,8 @@ async function exportOtToPDF() {
 
 async function exportOtToPDFDirect(ot) {
   try {
-    const url = "./docs/ot-template.pdf";
+    const url = "https://mantt0.github.io/otpro-web/ot-template.pdf";
+
     const bytes = await fetch(url).then(r => {
       if (!r.ok) throw new Error("Plantilla PDF no encontrada");
       return r.arrayBuffer();
