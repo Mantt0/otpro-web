@@ -1,3 +1,66 @@
+/* ====== Kanban Mejorado ====== */
+.kanban-columns {
+  display: flex;
+  gap: 24px;
+  margin-top: 18px;
+}
+.kanban-column {
+  background: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px #0001;
+  flex: 1 1 0;
+  padding: 12px 8px 24px 8px;
+  min-width: 220px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+}
+.kanban-column h3 {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #0077b6;
+  letter-spacing: 1px;
+}
+.kanban-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.kanban-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px #0002;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border-left: 5px solid #00b4d8;
+  transition: box-shadow 0.2s;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kanban-card.kanban-alert {
+  border-left-color: #e63946;
+  background: #fff0f0;
+}
+.kanban-card strong {
+  color: #0077b6;
+  font-size: 1.05em;
+}
+.kanban-card em {
+  color: #555;
+  font-size: 0.97em;
+}
+/* DESPUÉS */
+#otTable th,
+#otTable td,
+#mdTable th,
+#mdTable td {
+  text-align: center;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
 body {
@@ -140,21 +203,85 @@ h1, h2, h3 {
 }
 
 /* Tabla OT */
-#otTable {
+
+.tabla-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+/* DESPUÉS */
+#otTable,
+#mdTable {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
+  font-size: 15px;
   background: #fff;
 }
 
-#otTable th, #otTable td {
-  border: 1px solid #ccc;
-  padding: 8px;
+
+/* DESPUÉS */
+#otTable th,
+#mdTable th {
+  background: linear-gradient(to right, #0077b6, #00b4d8);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px;
 }
 
-#otTable th {
-  background: #0077b6;
+
+/* DESPUÉS */
+#otTable td,
+#mdTable td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+
+/* DESPUÉS */
+#otTable tr:nth-child(even),
+#mdTable tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+#otTable tr:hover,
+#mdTable tr:hover {
+  background-color: #e0f7fa;
+  cursor: pointer;
+}
+
+
+/* Etiquetas visuales */
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
   color: #fff;
+  display: inline-block;
+  text-align: center;
+}
+.badge.abierta { background: #2a9d8f; }
+.badge.enproceso { background: #f4a261; }
+.badge.cerrada { background: #e63946; }
+
+.badge.alta { background: #d00000; }
+.badge.media { background: #f77f00; }
+.badge.baja { background: #3a86ff; }
+
+/* Botones de acción */
+.icon-btn {
+  background: none;
+  border: none;
+  color: #0077b6;
+  font-size: 16px;
+  cursor: pointer;
+  margin-right: 6px;
+}
+.icon-btn:hover {
+  color: #00b4d8;
 }
 
 /* Kanban */
@@ -562,4 +689,17 @@ h1, h2, h3 {
   .evidencias-grid {
     grid-template-columns: 1fr;
   }
+}
+#filtroFecha {
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #333;
+  max-width: 200px;
+}
+.badge i {
+  margin-right: 6px;
+  color: inherit;
 }

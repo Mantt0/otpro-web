@@ -22,6 +22,11 @@ let otList = [];
 let editKey = null;
 let perfilUsuario = { rol: "operador" };
 let charts = {};
+// Filtros dashboard
+let dashboardFiltroMes = document.getElementById("dashboardFiltroMes");
+let dashboardVerTotal = document.getElementById("dashboardVerTotal");
+let dashboardAplicarFiltro = document.getElementById("dashboardAplicarFiltro");
+let otListDashboard = [];
 // Para edición: guardar URLs de evidencias existentes
 let existingEvidenciasAntes   = [];
 let existingEvidenciasDespues = [];
@@ -38,6 +43,63 @@ const evidenciaAntesInput   = document.getElementById("evidenciaAntes");
 const evidenciaDespuesInput = document.getElementById("evidenciaDespues");
 const previewAntes          = document.getElementById("previewAntes");
 const previewDespues        = document.getElementById("previewDespues");
+
+// ==================== Sección Multidisciplinaria ====================
+const navMultidisciplinaria   = document.getElementById("navMultidisciplinaria");
+const seccionMultidisciplinaria = document.getElementById("seccionMultidisciplinaria");
+
+const mdModal       = document.getElementById("mdModal");
+const closeMdModal  = document.getElementById("closeMdModal");
+const btnNuevoMD    = document.getElementById("btnNuevoMD");
+const btnAddMD      = document.getElementById("btnAddMD");
+const btnCloseMD    = document.getElementById("btnCloseMD");
+
+const mdSelectArea    = document.getElementById("mdSelectArea");
+const mdSelectEstado  = document.getElementById("mdSelectEstado");
+const mdSelectPrioridad = document.getElementById("mdSelectPrioridad");
+
+const mdFechaMes      = document.getElementById("mdFechaMes");
+const mdFechaInicio   = document.getElementById("mdFechaInicio");
+const mdFechaFinal    = document.getElementById("mdFechaFinal");
+
+const mdDescripcion   = document.getElementById("mdDescripcion");
+const mdFotos         = document.getElementById("mdFotos");
+const mdPreviewFotos  = document.getElementById("mdPreviewFotos");
+
+
+
+
+const mdTableBody     = document.getElementById("mdTableBody");
+const filtroEstadoMD  = document.getElementById("filtroEstadoMD");
+const filtroAreaMD    = document.getElementById("filtroAreaMD");
+const filtroFechaMD   = document.getElementById("filtroFechaMD");
+function getMesActual() {
+  const hoy = new Date();
+  return hoy.toISOString().slice(0, 7);  // formato “YYYY-MM”
+}
+
+
+// Referencias Modal Editar MD
+const editMdModal         = document.getElementById("editMdModal");
+const closeEditMdModal    = document.getElementById("closeEditMdModal");
+const btnSaveEditMd       = document.getElementById("btnSaveEditMd");
+const btnCancelEditMd     = document.getElementById("btnCancelEditMd");
+const editMdSelectTecnico = document.getElementById("editMdSelectTecnico");
+const editMdSelectEstado  = document.getElementById("editMdSelectEstado");
+const editMdFechaFinal    = document.getElementById("editMdFechaFinal");
+const editMdFotosDespues  = document.getElementById("editMdFotosDespues");
+const editMdPreviewDespues= document.getElementById("editMdPreviewDespues");
+const editMdFotosAntes    = document.getElementById("editMdFotosAntes");
+const editMdPreviewAntes  = document.getElementById("editMdPreviewAntes");
+// Preview de Fotos Antes en edición
+if (editMdFotosAntes && editMdPreviewAntes) {
+  editMdFotosAntes.addEventListener("change", () => previewImages(editMdFotosAntes, editMdPreviewAntes, 2));
+}
+let currentEditMdId = null;
+
+// Array para almacenar registros en memoria
+let mdList = [];
+
 
 // ==================== Auth ====================
 auth.onAuthStateChanged(user => {
@@ -88,8 +150,13 @@ function solicitarPermisoPush(){
 }
 // ==================== UI Navegación ====================-------------------------------------------------------------------
 const secciones = [
-  "seccionFormulario","seccionDashboard","seccionHistorial",
-  "seccionKanban","seccionCalendario","seccionConfiguracion"
+  "seccionFormulario",
+  "seccionDashboard",
+  "seccionHistorial",
+  "seccionMultidisciplinaria",  // ← aquí lo añadimos
+  "seccionKanban",
+  "seccionCalendario",
+  "seccionConfiguracion"
 ];
 function mostrarSeccion(id){
   secciones.forEach(s=>{
@@ -114,7 +181,7 @@ document.getElementById("navNuevaOT").addEventListener("click", () => {
 document.getElementById("navDashboard").onclick  = () => mostrarSeccion("seccionDashboard");
 document.getElementById("navHistorial").onclick  = () => {
   mostrarSeccion("seccionHistorial");
-  document.getElementById("filtroEstado").value = "Abierta";
+  document.getElementById("filtroEstado").value = "";
   aplicarFiltros();
 };
 document.getElementById("navCalendario").onclick = () => {
@@ -123,6 +190,33 @@ document.getElementById("navCalendario").onclick = () => {
 };
 document.getElementById("navConfiguracion").onclick = () =>
   mostrarSeccion("seccionConfiguracion");
+
+// Navegación a Multidisciplinaria
+navMultidisciplinaria.onclick = () => {
+  mostrarSeccion("seccionMultidisciplinaria");
+
+  // Cargar opciones de Área y filtros
+  cargarSelectAreasMD();
+  // Llenar select de técnicos para editar
+  cargarSelectUsuarios("tecnico", editMdSelectTecnico);
+  
+
+
+  // Reset filtros MD
+  filtroEstadoMD.value = "";
+  filtroAreaMD.value   = "";
+  filtroFechaMD.value = getMesActual();
+  aplicarFiltrosMD();
+
+  // Iniciar escucha en Firebase
+  mdList = [];
+  cargarMultidisciplinarias();
+  // Aplicar filtro solo del mes actual después de un pequeño retardo para asegurar que los datos y selects estén listos
+  setTimeout(() => {
+    filtroFechaMD.value = getMesActual();
+    aplicarFiltrosMD();
+  }, 300);
+};
 
 // Dark mode
 document.getElementById("toggleMode").onclick = () => {
@@ -236,6 +330,147 @@ async function borrarArea(key) {
     showToast("Área eliminada");
   }
 }
+
+
+
+// Preview de Fotos Después en edición
+editMdFotosDespues.addEventListener("change", () =>
+  previewImages(editMdFotosDespues, editMdPreviewDespues, 2)
+);
+
+// Función para abrir modal y rellenar campos
+async function openEditMdModal(id) {
+
+  const snap = await db.ref("multidisciplinarias/" + id).once("value");
+  const item = snap.val();
+  if (!item) return showToast("Registro no encontrado");
+  currentEditMdId = id;
+
+  // Previews existentes para ANTES (después de definir item)
+  if (editMdPreviewAntes) {
+    editMdPreviewAntes.innerHTML = "";
+    // Guardar imágenes actuales en memoria para edición
+    window._editMdImagenesAntes = Array.isArray(item.imagenes) ? [...item.imagenes] : [];
+    window._editMdImagenesAntes.forEach((url, idx) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "preview-wrapper";
+      const img = document.createElement("img");
+      img.src = url;
+      const btn = document.createElement("button");
+      btn.className = "remove-img-btn";
+      btn.textContent = "×";
+      btn.onclick = () => {
+        window._editMdImagenesAntes.splice(idx, 1);
+        wrapper.remove();
+      };
+      wrapper.append(img, btn);
+      editMdPreviewAntes.appendChild(wrapper);
+    });
+  }
+
+  // Rellenar campos
+  editMdFechaFinal.value   = item.fechaFinalCorregir || "";
+  editMdSelectEstado.value = item.estado || "";
+  editMdSelectTecnico.value= item.corregioId || "";
+
+  // Previews existentes para DESPUÉS
+  editMdPreviewDespues.innerHTML = "";
+  window._editMdImagenesDespues = Array.isArray(item.imagenesDespues) ? [...item.imagenesDespues] : [];
+  window._editMdImagenesDespues.forEach((url, idx) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "preview-wrapper";
+    const img = document.createElement("img");
+    img.src = url;
+    const btn = document.createElement("button");
+    btn.className = "remove-img-btn";
+    btn.textContent = "×";
+    btn.onclick = () => {
+      window._editMdImagenesDespues.splice(idx, 1);
+      wrapper.remove();
+    };
+    wrapper.append(img, btn);
+    editMdPreviewDespues.appendChild(wrapper);
+  });
+
+  editMdModal.classList.remove("hidden");
+}
+
+// Guardar cambios de edición
+btnSaveEditMd.addEventListener("click", async () => {
+  // Subir nuevas fotos ANTES
+  let newUrlsAntes = [];
+  if (editMdFotosAntes) {
+    const filesAntes = Array.from(editMdFotosAntes.files).slice(0,2);
+    for (const f of filesAntes) {
+      try { newUrlsAntes.push(await subirImagenImgBB(f)); }
+      catch { showToast("Error al subir foto (antes)"); }
+    }
+  }
+  if (!currentEditMdId) return;
+  if (!editMdFechaFinal.value || !editMdSelectEstado.value || !editMdSelectTecnico.value) {
+    return showToast("Completa todos los campos de edición");
+  }
+
+  // Subir nuevas fotos después
+  const files = Array.from(editMdFotosDespues.files).slice(0,2);
+  const newUrls = [];
+  for (const f of files) {
+    try { newUrls.push(await subirImagenImgBB(f)); }
+    catch { showToast("Error al subir foto"); }
+  }
+
+
+  // Usar las imágenes actuales (menos las eliminadas) y sumar las nuevas
+  const imagenesAntesFinal = (window._editMdImagenesAntes || []).concat(newUrlsAntes);
+  const imagenesDespuesFinal = (window._editMdImagenesDespues || []).concat(newUrls);
+
+  // Actualizar Firebase
+  const updates = {
+    fechaFinalCorregir: editMdFechaFinal.value,
+    estado:            editMdSelectEstado.value,
+    corregioId:        editMdSelectTecnico.value,
+    corregio:          editMdSelectTecnico.selectedOptions[0].textContent,
+    imagenes:          imagenesAntesFinal,
+    imagenesDespues:   imagenesDespuesFinal
+  };
+  await db.ref("multidisciplinarias/" + currentEditMdId).update(updates);
+
+  editMdModal.classList.add("hidden");
+  currentEditMdId = null;
+  // Reset modal
+  editMdFechaFinal.value = "";
+  editMdSelectEstado.value = "";
+  editMdSelectTecnico.value= "";
+  if (editMdFotosAntes) editMdFotosAntes.value = "";
+  if (editMdPreviewAntes) editMdPreviewAntes.innerHTML = "";
+  if (editMdFotosDespues) editMdFotosDespues.value = "";
+  if (editMdPreviewDespues) editMdPreviewDespues.innerHTML = "";
+  window._editMdImagenesAntes = [];
+  window._editMdImagenesDespues = [];
+});
+
+// Cancelar edición
+btnCancelEditMd.onclick = () => {
+  editMdModal.classList.add("hidden");
+  currentEditMdId = null;
+  editMdFechaFinal.value = "";
+  editMdSelectEstado.value = "";
+  editMdSelectTecnico.value= "";
+  editMdFotosDespues.value    = "";
+  editMdPreviewDespues.innerHTML = "";
+};
+
+// Escuchar cambios y actualizar fila
+db.ref("multidisciplinarias").on("child_changed", snap => {
+  const item = snap.val(); item._id = snap.key;
+  mdList = mdList.map(m => m._id === item._id ? item : m);
+  const row = mdTableBody.querySelector(`tr[data-id="${item._id}"]`);
+  if (row) row.remove();
+  renderRowMD(item);
+});
+
+
+
 
 // Al cargar la app, iniciar pestaña Áreas
 window.addEventListener("load", () => tabAreas.click());
@@ -606,6 +841,7 @@ renderFromRealtime();
 
 
 // ==================== Render, filtros y edición ====================
+
 async function renderFromRealtime() {
   otList = [];
   const snap = await db.ref("ordenes").once("value");
@@ -616,12 +852,18 @@ async function renderFromRealtime() {
   });
 
   cargarFiltrosAuto();
-  document.getElementById("filtroEstado").value = "Abierta";
+  document.getElementById("filtroEstado").value = "";
+  // Establece el filtro de fecha al mes actual (YYYY-MM)
+  const hoy = new Date();
+  const filtroFecha = document.getElementById("filtroFecha");
+  if (filtroFecha) filtroFecha.value = hoy.toISOString().slice(0, 7);
   aplicarFiltros();
   renderKanban();
-  renderGraficos();
+  // Dashboard: por defecto mostrar el mes actual
+  if (dashboardFiltroMes) dashboardFiltroMes.value = hoy.toISOString().slice(0, 7);
+  if (dashboardVerTotal) dashboardVerTotal.checked = false;
+  aplicarFiltroDashboard();
   renderCalendar();
-  updateKPI();
 }
 
 function cargarFiltrosAuto() {
@@ -654,53 +896,81 @@ function cargarFiltrosAuto() {
     .addEventListener(id==="filtroArea"?"input":"change", aplicarFiltros);
 });
 
-function aplicarFiltros(){
-  const est = document.getElementById("filtroEstado").value;
-  const area = document.getElementById("filtroArea").value.toLowerCase().trim();
-  const fec = document.getElementById("filtroFecha").value;
-  const filt = otList.filter(o =>
-    (!est||o.estado===est) &&
-    (!area||o.area.toLowerCase().includes(area)) &&
-    (!fec||o.fecha===fec)
-  );
-  renderTable(filt);
+// Nueva función aplicarFiltros con filtro por mes (YYYY-MM)
+function aplicarFiltros() {
+  const estado = document.getElementById("filtroEstado").value;
+  const area = document.getElementById("filtroArea").value.toLowerCase();
+  const fechaMes = document.getElementById("filtroFecha").value; // "YYYY-MM"
+
+  const [añoFiltro, mesFiltro] = fechaMes ? fechaMes.split("-").map(Number) : [null, null];
+
+  const filtradas = otList.filter(ot => {
+    const fechaOT = new Date(ot.fechaInicio || ot.fecha);
+    const cumpleEstado = !estado || ot.estado === estado;
+    const cumpleArea = !area || ot.area.toLowerCase().includes(area);
+    const cumpleFecha = !fechaMes || (
+      fechaOT.getFullYear() === añoFiltro &&
+      (fechaOT.getMonth() + 1) === mesFiltro
+    );
+    return cumpleEstado && cumpleArea && cumpleFecha;
+  });
+
+  actualizarVista(filtradas); // puede ser renderizar tabla, calendario, etc.
 }
 
-function renderTable(lista = otList) {
-  const tb = document.querySelector("#otTable tbody");
-  tb.innerHTML = "";
-  lista.forEach(o => {
+// Puedes reemplazar actualizarVista por renderTable o la función que uses para mostrar los datos
+function actualizarVista(lista) {
+  renderTable(lista);
+}
+
+
+
+// Render dinámico de la tabla de historial con badges y botones de acción
+
+function renderTablaOT(lista) {
+  const tbody = document.getElementById("otTableBody");
+  tbody.innerHTML = "";
+
+  lista.forEach(ot => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${o.numeroOT || "—"}</td>
-      <td>${o.fecha}</td>
-      <td>${o.area}</td>
-      <td>${o.equipo}</td>
-      <td>${o.estado}</td>
-      <td>${o.prioridad}</td>
-      <td>${o.tipo}</td>
-      <td>${o.tiempototal || "N/A"}</td>
+      <td><strong>${ot.numeroOT || "—"}</strong></td>
+      <td>${ot.fechaInicio || ot.fecha || ""}</td>
+      <td>${ot.area || ""}</td>
+      <td>${ot.equipo || ""}</td>
+      <td><span class="badge ${ot.estado ? ot.estado.toLowerCase().replace(/\s/g, '') : ''}">${ot.estado || ""}</span></td>
       <td>
-        <button class="pdf-btn"   data-key="${o._id}">📄</button>
-        <button class="edit-btn"  data-key="${o._id}">✏️</button>
-        <button class="delete-btn"data-key="${o._id}">🗑️</button>
-      </td>`;
-    tb.appendChild(tr);
+        <span class="badge ${ot.prioridad ? ot.prioridad.toLowerCase() : ''}">
+          <i class="fas ${getPrioridadIcon(ot.prioridad || '')}"></i> ${ot.prioridad || ''}
+        </span>
+      </td>
+      <td>${ot.tipo || ""}</td>
+      <td>${ot.tiempototal || ot.tiempo || "N/A"}</td>
+      <td>
+        <button class="icon-btn pdf-btn"   data-key="${ot._id}" title="Ver"><i class="fas fa-file-alt"></i></button>
+        <button class="icon-btn edit-btn"  data-key="${ot._id}" title="Editar"><i class="fas fa-edit"></i></button>
+        <button class="icon-btn delete-btn"data-key="${ot._id}" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
+      </td>
+    `;
+    tbody.appendChild(tr);
   });
 
   // Eventos
-  document.querySelectorAll(".edit-btn")
+  tbody.querySelectorAll(".edit-btn")
     .forEach(b => b.onclick = () => editOT(b.dataset.key));
-  document.querySelectorAll(".delete-btn")
+  tbody.querySelectorAll(".delete-btn")
     .forEach(b => b.onclick = () => delOT(b.dataset.key));
-  document.querySelectorAll(".qr-btn")
-    .forEach(b => b.onclick = () => showQR(b.dataset.equipo));
-  document.querySelectorAll(".pdf-btn")
+  tbody.querySelectorAll(".pdf-btn")
     .forEach(b => b.onclick = () => {
       const ot = otList.find(o => o._id === b.dataset.key);
       if (!ot) return showToast("OT no encontrada");
-      exportOtToPDFDirect(ot); // ✅ nueva versión desacoplada
+      exportOtToPDFDirect(ot);
     });
+}
+
+// Para compatibilidad, puedes redirigir actualizarVista a renderTablaOT
+function actualizarVista(lista) {
+  renderTablaOT(lista);
 }
 
 
@@ -801,13 +1071,13 @@ function delOT(id){
 }
 
 // ==================== KPIs y Kanban ====================
-function updateKPI(){
+function updateKPI(lista){
   const s=id=>document.getElementById(id);
-  s("totalOt").textContent=otList.length;
-  s("openOt") .textContent=otList.filter(o=>o.estado==="Abierta").length;
-  s("progressOt").textContent=otList.filter(o=>o.estado==="En progreso").length;
-  s("closedOt").textContent=otList.filter(o=>o.estado==="Cerrada").length;
-  s("lateOt") .textContent=otList.filter(o=>new Date(o.finrep)<new Date()&&o.estado!=="Cerrada").length;
+  s("totalOt").textContent=lista.length;
+  s("openOt") .textContent=lista.filter(o=>o.estado==="Abierta").length;
+  s("progressOt").textContent=lista.filter(o=>o.estado==="En progreso").length;
+  s("closedOt").textContent=lista.filter(o=>o.estado==="Cerrada").length;
+  s("lateOt") .textContent=lista.filter(o=>new Date(o.finrep)<new Date()&&o.estado!=="Cerrada").length;
 }
 
 function renderKanban(){
@@ -830,7 +1100,7 @@ function crearChart(id, config) {
 
 function renderGraficos() {
   const est={}, area={}, dia={}, tipo={}, prior={}, tipoMin={}, countTipo={}, cat={};
-  otList.forEach(o => {
+  otListDashboard.forEach(o => {
     est[o.estado] = (est[o.estado]||0) + 1;
     area[o.area]  = (area[o.area]||0) + 1;
     dia[o.fecha]  = (dia[o.fecha]||0) + 1;
@@ -882,6 +1152,40 @@ function renderGraficos() {
   });
 }
 
+// ==================== Filtro Dashboard ====================
+function aplicarFiltroDashboard() {
+  let lista = otList;
+  if (dashboardVerTotal && dashboardVerTotal.checked) {
+    // Mostrar todo
+    otListDashboard = lista;
+  } else if (dashboardFiltroMes && dashboardFiltroMes.value) {
+    // Filtrar por mes
+    const [año, mes] = dashboardFiltroMes.value.split("-").map(Number);
+    otListDashboard = lista.filter(ot => {
+      const fecha = new Date(ot.fechaInicio || ot.fecha);
+      return fecha.getFullYear() === año && (fecha.getMonth() + 1) === mes;
+    });
+  } else {
+    otListDashboard = lista;
+  }
+  updateKPI(otListDashboard);
+  renderGraficos();
+}
+
+if (dashboardFiltroMes) {
+  dashboardFiltroMes.addEventListener("change", aplicarFiltroDashboard);
+}
+if (dashboardVerTotal) {
+  dashboardVerTotal.addEventListener("change", function() {
+    if (this.checked) {
+      if (dashboardFiltroMes) dashboardFiltroMes.disabled = true;
+    } else {
+      if (dashboardFiltroMes) dashboardFiltroMes.disabled = false;
+    }
+    aplicarFiltroDashboard();
+  });
+}
+
 // ==================== Calendario ====================
 let calendarObj = null;
 function renderCalendar() {
@@ -919,8 +1223,9 @@ const modalImage       = document.getElementById("modalImage");
 // Cerrar modal de imagen
 closeImageModal.onclick = () => imageModal.classList.add("hidden");
 
-// Delegación de click en previews
-;[previewAntes, previewDespues].forEach(previewEl => {
+
+// Delegación de click en previews y tabla MD
+;[previewAntes, previewDespues, mdTableBody].forEach(previewEl => {
   if (!previewEl) return;
   previewEl.addEventListener("click", e => {
     if (e.target.tagName === "IMG") {
@@ -932,8 +1237,246 @@ closeImageModal.onclick = () => imageModal.classList.add("hidden");
 
 
 // ==================== Init ====================
+
+
+// 1) Cargar Áreas para MD (y para filtro)
+async function cargarSelectAreasMD() {
+  mdSelectArea.innerHTML = '<option value="">Seleccione Área</option>';
+  filtroAreaMD.innerHTML = '<option value="">Todas las áreas</option>';
+  const snap = await db.ref("master/areas").once("value");
+  snap.forEach(child => {
+    const key  = child.key;
+    const name = child.val().name;
+
+    // Opciones del modal
+    const opt = document.createElement("option");
+    opt.value       = key;
+    opt.textContent = name;
+    mdSelectArea.appendChild(opt);
+
+    // Opciones del filtro (por nombre)
+    const optF = document.createElement("option");
+    optF.value       = name;
+    optF.textContent = name;
+    filtroAreaMD.appendChild(optF);
+  });
+}
+
+// 2) Abrir/Cerrar modal
+btnNuevoMD.onclick   = () => mdModal.classList.remove("hidden");
+closeMdModal.onclick = () => { mdModal.classList.add("hidden"); resetMdModal(); };
+btnCloseMD.onclick   = () => { mdModal.classList.add("hidden"); resetMdModal(); };
+
+// 3) Limpiar campos del modal
+function resetMdModal() {
+  // Persistentes
+  mdSelectArea.value    = "";
+  mdSelectEstado.value  = "";
+  mdSelectPrioridad.value = "";
+  mdFechaInicio.value   = "";
+  if (typeof mdFechaFinal !== 'undefined' && mdFechaFinal) mdFechaFinal.value = "";
+  // Episódicos
+  mdDescripcion.value   = "";
+  mdFotos.value         = "";
+  mdPreviewFotos.innerHTML = "";
+}
+
+// 4) Preview de imágenes (reutiliza helper existente)
+mdFotos.addEventListener("change", () =>
+  previewImages(mdFotos, mdPreviewFotos, 2)
+);
+
+// 5) Agregar registro MD
+btnAddMD.addEventListener("click", async () => {
+
+  // 1) Validar campos obligatorios
+  if (
+    !mdFechaInicio.value ||
+    !mdSelectArea.value ||
+    !mdSelectEstado.value ||
+    !mdSelectPrioridad.value
+  ) {
+    return showToast("Completa todos los campos obligatorios");
+  }
+
+  if (!mdDescripcion.value.trim()) {
+    return showToast("Escribe una descripción");
+  }
+
+  // 2) Subir imágenes
+  const files = Array.from(mdFotos.files).slice(0, 2);
+  const urls  = [];
+  for (const file of files) {
+    try {
+      const url = await subirImagenImgBB(file);
+      urls.push(url);
+    } catch {
+      return showToast("Error al subir imágenes");
+    }
+  }
+
+  // 3) Construir el objeto sin fechaFinal ni corregido, agregando fechaMes
+  const fechaInicioVal = mdFechaInicio.value;
+  const fechaMes = fechaInicioVal ? fechaInicioVal.slice(0, 7) : "";
+  const mdItem = {
+    areaId:      mdSelectArea.value,
+    area:        mdSelectArea.selectedOptions[0].textContent,
+    estado:      mdSelectEstado.value,
+    prioridad:   mdSelectPrioridad.value,
+    fechaInicio: fechaInicioVal,
+    fechaMes:    fechaMes,
+    descripcion: mdDescripcion.value.trim(),
+    imagenes:    urls,
+    timestamp:   Date.now()
+  };
+
+  // 4) Guardar en Firebase
+  await db.ref("multidisciplinarias").push(mdItem);
+
+  // 5) Limpiar solo los campos episódicos
+  mdDescripcion.value    = "";
+  mdFotos.value          = "";
+  mdPreviewFotos.innerHTML = "";
+});
+
+
+// 6) Escucha en tiempo real y renderizado
+function cargarMultidisciplinarias() {
+  const refMD = db.ref("multidisciplinarias");
+  refMD.off();
+
+    // Limpiar tabla antes de volver a escuchar
+  mdTableBody.innerHTML = "";
+ 
+  // Nuevo registro
+  refMD.on("child_added", snap => {
+    const item = snap.val();
+    item._id = snap.key;
+    // Si no tiene fechaMes, calcularla y actualizar en Firebase
+    if (!item.fechaMes && item.fechaInicio) {
+      item.fechaMes = item.fechaInicio.slice(0, 7);
+      db.ref("multidisciplinarias/" + item._id).update({ fechaMes: item.fechaMes });
+    }
+    mdList.push(item);
+    renderRowMD(item);
+  });
+
+  // Registro eliminado
+  refMD.on("child_removed", snap => {
+    const key = snap.key;
+    mdList = mdList.filter(m => m._id !== key);
+    const row = mdTableBody.querySelector(`tr[data-id="${key}"]`);
+    if (row) row.remove();
+  });
+    // Escuchar cambios y actualizar fila inmediatamente
+  refMD.on("child_changed", snap => {
+    const item = snap.val();
+    item._id = snap.key;
+
+    // Actualizar array en memoria
+    mdList = mdList.map(m => m._id === item._id ? item : m);
+
+    // Remover fila vieja y volver a dibujarla
+    const row = mdTableBody.querySelector(`tr[data-id="${item._id}"]`);
+    if (row) row.remove();
+    renderRowMD(item);
+  });
+
+}
+
+// 7) Renderizar una fila en la tabla MD
+function renderRowMD(item) {
+  const tr = document.createElement("tr");
+  tr.dataset.id = item._id;
+  tr.innerHTML = `
+    <td style="text-align:left;">${item.descripcion}</td>
+    <td style="text-align:center;">${item.area}</td>
+    <td>
+      <span class="badge ${item.estado.toLowerCase().replace(/\s/g,"")}">
+        ${item.estado}
+      </span>
+    </td>
+    <td>
+    <span class="badge ${item.prioridad.toLowerCase()}">
+      <i class="fas ${getPrioridadIcon(item.prioridad)}"></i> ${item.prioridad}
+    </span>
+  </td>
+    <td>${item.fechaInicio}</td>
+    <td>${item.fechaFinalCorregir}</td>
+    <td>${item.corregio || ""}</td>
+
+    <!-- Celda “Antes” -->
+    <td>
+      ${(item.imagenes || []).map(url =>
+        `<img src="${url}" style="width:40px;height:40px;object-fit:cover;margin-right:4px;border-radius:4px;">`
+      ).join("")}
+    </td>
+
+    <!-- Celda “Después” -->
+    <td>
+      ${(item.imagenesDespues || []).map(url =>
+        `<img src="${url}" style="width:40px;height:40px;object-fit:cover;margin-right:4px;border-radius:4px;">`
+      ).join("")}
+    </td>
+
+    <td>
+       <button class="icon-btn edit-md" data-id="${item._id}" title="Editar">
+      <i class="fas fa-edit"></i>
+    </button>
+    <button class="icon-btn delete-md" data-id="${item._id}" title="Eliminar">
+      <i class="fas fa-trash-alt"></i>
+    </button>
+    </td>`;
+  mdTableBody.appendChild(tr);
+
+  // Borrar registro
+  tr.querySelector(".delete-md").onclick = () => {
+    if (confirm("¿Eliminar este registro?")) {
+      db.ref("multidisciplinarias/" + item._id).remove();
+    }
+  };
+}
+
+
+// Delegado para abrir modal de edición al click en .edit-md
+mdTableBody.addEventListener("click", e => {
+  const btn = e.target.closest(".edit-md");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  openEditMdModal(id);
+});
+
+// 8) Filtros en tiempo real
+[filtroEstadoMD, filtroAreaMD, filtroFechaMD].forEach(el =>
+  el.addEventListener("change", aplicarFiltrosMD)
+);
+
+function aplicarFiltrosMD() {
+  const est      = filtroEstadoMD.value;
+  const area     = filtroAreaMD.value.toLowerCase();
+  const fechaMes = filtroFechaMD.value;
+
+  mdTableBody.innerHTML = "";
+  mdList
+    .filter(item => {
+      const okEstado = !est    || item.estado === est;
+      const okArea   = !area   || item.area.toLowerCase().includes(area);
+      const okFecha  = !fechaMes || item.fechaMes === fechaMes;
+      return okEstado && okArea && okFecha;
+    })
+    .forEach(renderRowMD);
+}
+
+
+
 window.addEventListener("load", () => {
   mostrarSeccion("seccionDashboard");
+  // Si la sección multidisciplinaria está visible al cargar, filtrar por mes actual
+  if (seccionMultidisciplinaria && seccionMultidisciplinaria.style.display === "block") {
+    const mesActual = getMesActual();
+    filtroFechaMD.value = mesActual;
+    aplicarFiltrosMD();
+  }
 });
 const zonaSel = document.getElementById("zonaContacto");
 const bloque   = document.getElementById("bloqueSanitizacion");
@@ -1013,7 +1556,7 @@ async function exportOtToPDF() {
 
 async function exportOtToPDFDirect(ot) {
   try {
-   const url = "./docs/ot-template.pdf";
+    const url   = "/ot-template.pdf";
     const bytes = await fetch(url).then(r => {
       if (!r.ok) throw new Error("Plantilla PDF no encontrada");
       return r.arrayBuffer();
@@ -1091,6 +1634,15 @@ async function exportOtToPDFDirect(ot) {
   }
 }
 
+
+ function getPrioridadIcon(prioridad) {
+  switch (prioridad.toLowerCase()) {
+    case "alta": return "fa-fire";
+    case "media": return "fa-bolt";
+    case "baja": return "fa-bell";
+    default: return "fa-circle";
+  }
+}
 
 // 8) Conecta el botón
 document

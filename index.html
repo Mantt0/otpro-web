@@ -10,6 +10,7 @@
   <!-- Estilos -->
   <link rel="stylesheet" href="style.css?v=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- FullCalendar -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 
@@ -27,6 +28,8 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- 1) Carga PDF-Lib (ponlo en tu index.txt) -->
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.11.0/libs/pptxgen.min.js"></script>
+
 
   <!-- QR library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
@@ -40,8 +43,9 @@
   <h2>OT Pro</h2>
   <span id="userName" class="usuario-nombre"></span>
   <button id="navNuevaOT">➕ Nueva OT</button>
-  <button id="navDashboard">📊 Dashboard</button>
-  <button id="navHistorial">📁 Historial</button>
+  <button id="navMultidisciplinaria">🔀 Multidisciplinaria</button>
+    <button id="navHistorial">📁 Historial</button>
+    <button id="navDashboard">📊 Graficos OT</button>
   <button id="navCalendario">📅 Calendario</button>
   <button id="navConfiguracion">⚙️ Configuración</button>
   <button id="loginBtn"><i class="fas fa-user"></i> Iniciar sesión</button>
@@ -294,36 +298,94 @@
 <!-- Sección Historial -->
 <section id="seccionHistorial" style="display: none;">
   <h2>Historial OT</h2>
- <div class="filtros-ot">
-  <select id="filtroEstado">
-    <option value="">Todos los estados</option>
-  </select>
 
-  <select id="filtroArea">
-    <option value="">Todas las áreas</option>
-  </select>
+  <div class="filtros-ot">
+    <select id="filtroEstado">
+      <option value="">Todos los estados</option>
+      <option value="Abierta">Abierta</option>
+      <option value="En Proceso">En Proceso</option>
+      <option value="Cerrada">Cerrada</option>
+    </select>
 
-  <input id="filtroFecha" type="date" placeholder="Fecha">
-  <button id="exportarZipBtn">📁 Exportar ZIP + Excel</button>
-</div>
-  <table id="otTable">
-    <thead>
-  <tr>
-    <th># OT</th> <!-- 👈 NUEVA COLUMNA -->
-    <th>Fecha</th>
-    <th>Área</th>
-    <th>Equipo</th>
-    <th>Estado</th>
-    <th>Prioridad</th>
-    <th>Tipo</th>
-    <th>Tiempo</th>
-    <th>Acciones</th>
-  </tr>
-</thead>
+    <select id="filtroArea">
+      <option value="">Todas las áreas</option>
+      <!-- Áreas dinámicas -->
+    </select>
 
-    <tbody></tbody>
-  </table>
+    <input id="filtroFecha" type="month" placeholder="Mes">
+  </div>
+
+  <div class="tabla-wrapper">
+    <table id="otTable">
+      <thead>
+        <tr>
+          <th># OT</th>
+          <th>Fecha</th>
+          <th>Área</th>
+          <th>Equipo</th>
+          <th>Estado</th>
+          <th>Prioridad</th>
+          <th>Tipo</th>
+          <th>Tiempo</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="otTableBody">
+        <!-- Filas dinámicas -->
+      </tbody>
+    </table>
+  </div>
 </section>
+
+<!-- ——— Sección Multidisciplinaria ——— -->
+<section id="seccionMultidisciplinaria" style="display: none;">
+  <h2>Multidisciplinaria</h2>
+
+  <div class="filtros-ot">
+    <select id="filtroEstadoMD">
+      <option value="">Todos los estados</option>
+      <option value="Abierta">Abierta</option>
+      <option value="En Proceso">En Proceso</option>
+      <option value="Cerrada">Cerrada</option>
+    </select>
+
+    <select id="filtroAreaMD">
+      <option value="">Todas las áreas</option>
+      <!-- Opciones dinámicas -->
+    </select>
+
+    <input id="filtroFechaMD" type="month" placeholder="Mes">
+
+    <button id="btnNuevoMD" class="ot-submit">➕ Nueva Multidisciplinaria</button>
+    </button>
+
+  </div>
+
+  <div class="tabla-wrapper">
+  <table id="mdTable">
+  <thead>
+    <tr>
+      <th>Descripción</th>
+      <th>Área</th>
+      <th>Estado</th>
+      <th>Prioridad</th>     <!-- ← nueva posición -->
+      <th>Fecha Inicio</th>
+      <th>Fecha Final</th>
+      <th>Corrigió</th>
+      <th>Antes</th>
+      <th>Después</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+
+
+      <tbody id="mdTableBody">
+        <!-- Filas dinámicas -->
+      </tbody>
+    </table>
+  </div>
+</section>
+<!-- ——————————————————————————————— -->
 
 <!-- Tablero Kanban -->
 <section id="seccionKanban">
@@ -337,7 +399,16 @@
 
 <!-- Dashboard KPI -->
 <section id="seccionDashboard" style="display: none;">
-  <h2>Dashboard</h2>
+  <h2>Gráficos Mensual</h2>
+  <div class="dashboard-filtros" style="margin-bottom:1rem; display:flex; align-items:center; gap:1rem;">
+    <div style="display:flex; align-items:center; gap:0.5rem; background:#f8f9fa; border-radius:8px; padding:8px 16px; box-shadow:0 1px 4px #0001;">
+      <label for="dashboardFiltroMes" style="font-weight:500; margin:0;">Filtrar por mes:</label>
+      <input id="dashboardFiltroMes" type="month" style="padding:4px 10px; border:1px solid #bdbdbd; border-radius:4px; font-size:1rem; background:#fff;">
+      <label style="display:flex; align-items:center; gap:0.3rem; margin:0 0 0 10px; font-size:1rem;">
+        <input type="checkbox" id="dashboardVerTotal" style="accent-color:#0077b6; width:18px; height:18px;"> Ver total
+      </label>
+    </div>
+  </div>
   <div class="kpi-resumen">
     Total OT: <span id="totalOt"></span> |
     Abiertas: <span id="openOt"></span> |
@@ -378,6 +449,8 @@
     <button id="tabUsuarios">Usuarios</button>
   </div>
   <div id="configContent">
+
+
         <!-- ——— Áreas ——— -->
 <div id="sectionAreas" class="config-section">
   <h3>Gestión de Áreas</h3>
@@ -400,6 +473,7 @@
     <tbody></tbody>
   </table>
 </div>
+
 <!-- ——— Equipos ——— -->
 <div id="sectionEquipos" class="config-section hidden">
   <h3>Gestión de Equipos</h3>
@@ -477,6 +551,119 @@
 
   </div>
 </section>
+<!-- ——— Modal Editar Multidisciplinaria ——— -->
+<div id="editMdModal" class="modal hidden">
+  <div class="modal-content" style="max-width:600px; max-height:90vh; overflow:auto;">
+    <span id="closeEditMdModal" class="close">&times;</span>
+    <h3>Editar Multidisciplinaria</h3>
+
+    <div class="ot-grid" style="margin-top:1rem;">
+      <div class="ot-group">
+        <label for="editMdFechaFinal">Fecha Final</label>
+        <input type="date" id="editMdFechaFinal" required>
+      </div>
+      <div class="ot-group">
+        <label for="editMdSelectTecnico">Técnico</label>
+        <select id="editMdSelectTecnico" required>
+          <option value="">Seleccione Técnico</option>
+        </select>
+      </div>
+      <div class="ot-group">
+        <label for="editMdSelectEstado">Estado</label>
+        <select id="editMdSelectEstado" required>
+          <option value="Abierta">Abierta</option>
+          <option value="En Proceso">En Proceso</option>
+          <option value="Cerrada">Cerrada</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section" style="margin-top:1rem; padding:1rem;">
+      <h4>Fotos Antes (máx 2)</h4>
+      <div class="ot-group">
+        <input type="file" id="editMdFotosAntes" accept="image/*" multiple>
+        <div id="editMdPreviewAntes" class="image-preview"></div>
+      </div>
+      <h4>Fotos Después (máx 2)</h4>
+      <div class="ot-group">
+        <input type="file" id="editMdFotosDespues" accept="image/*" multiple>
+        <div id="editMdPreviewDespues" class="image-preview"></div>
+      </div>
+    </div>
+
+    <div style="text-align:right; margin-top:1rem;">
+      <button id="btnSaveEditMd" class="ot-submit">💾 Guardar Cambios</button>
+      <button id="btnCancelEditMd" class="ot-submit" style="background:#e63946;">✖ Cancelar</button>
+    </div>
+  </div>
+</div>
+<!-- ——————————————————————————————— -->
+
+<!-- ——— Modal Nueva Multidisciplinaria ——— -->
+<div id="mdModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow: auto;">
+
+    <span id="closeMdModal" class="close">&times;</span>
+    <h3>Registrar Multidisciplinaria</h3>
+
+    <!-- Campos persistentes -->
+    <div class="ot-grid" style="margin-top: 1rem;">
+      <div class="ot-group">
+        <label for="mdFechaInicio">Fecha</label>
+        <input type="date" id="mdFechaInicio" required>
+      </div>
+      <div class="ot-group">
+        <label for="mdSelectArea">Área</label>
+        <select id="mdSelectArea" required>
+          <option value="">Seleccione Área</option>
+        </select>
+      </div>
+      <div class="ot-group">
+        <label for="mdSelectEstado">Estado</label>
+        <select id="mdSelectEstado" required>
+          <option value="">Seleccione Estado</option>
+          <option value="Abierta">Abierta</option>
+          <option value="En Proceso">En Proceso</option>
+          <option value="Cerrada">Cerrada</option>
+        </select>
+        <!-- ← Aquí inserta este bloque justo debajo de Estado -->
+      <div class="ot-group">
+        <label for="mdSelectPrioridad" style="margin-top:12px;display:block;">Prioridad</label>
+        <select id="mdSelectPrioridad" required style="margin-top:4px;">
+          <option value="">Seleccione Prioridad</option>
+          <option value="Alta">Alta</option>
+          <option value="Media">Media</option>
+          <option value="Baja">Baja</option>
+        </select>
+      </div>
+      </div>
+    </div>
+
+    <!-- Campos episódicos -->
+    <div class="form-section" style="margin-top: 1rem; padding: 1rem;">
+      <h4>Descripción y Fotos</h4>
+      <div class="ot-grid">
+        <div class="ot-group ot-wide">
+          <label for="mdDescripcion">Descripción</label>
+          <textarea id="mdDescripcion" rows="3"></textarea>
+        </div>
+        <div class="ot-group">
+          <label for="mdFotos">Fotos (máx 2)</label>
+          <input type="file" id="mdFotos" accept="image/*" multiple>
+          <div id="mdPreviewFotos" class="image-preview"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div style="text-align: right; margin-top: 1rem;">
+      <button id="btnAddMD" class="ot-submit">➕ Agregar</button>
+      <button id="btnCloseMD" class="ot-submit" style="background: #e63946;">✖ Cerrar</button>
+    </div>
+  </div>
+</div>
+<!-- ——————————————————————————————— -->
+
 
 <!-- Modal de Imagen en Tamaño Real -->
 <div id="imageModal" class="modal hidden">
@@ -501,7 +688,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-<script defer src="main.js"></script>
+
 
 <script>
   const database = firebase.database();
@@ -542,6 +729,24 @@ database.ref("reportesFalla").push(data);
     this.reset();
     document.querySelector('select[name="equipo"]').innerHTML = "";
   });
+</script>
+<script>
+// Al abrir el modal de nueva multidisciplinaria, poner la fecha actual en el campo de fecha
+document.addEventListener('DOMContentLoaded', function() {
+  const mdModal = document.getElementById('mdModal');
+  const mdFechaInicio = document.getElementById('mdFechaInicio');
+  const btnNuevoMD = document.getElementById('btnNuevoMD');
+  if (mdModal && mdFechaInicio && btnNuevoMD) {
+    btnNuevoMD.addEventListener('click', function() {
+      // Formato yyyy-mm-dd
+      const hoy = new Date();
+      const yyyy = hoy.getFullYear();
+      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+      const dd = String(hoy.getDate()).padStart(2, '0');
+      mdFechaInicio.value = `${yyyy}-${mm}-${dd}`;
+    });
+  }
+});
 </script>
 
 <script>
@@ -597,6 +802,35 @@ database.ref("reportesFalla").push(data);
       });
     });
   </script>
+</script>
+<script>
+// Miniaturas para campo 'Fotos Antes' en edición de MD
+document.addEventListener('DOMContentLoaded', function() {
+  const inputAntes = document.getElementById('editMdFotosAntes');
+  const previewAntes = document.getElementById('editMdPreviewAntes');
+  if (inputAntes && previewAntes) {
+    inputAntes.addEventListener('change', function() {
+      previewAntes.innerHTML = '';
+      const files = Array.from(inputAntes.files).slice(0,2); // máx 2
+      files.forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.style.maxWidth = '80px';
+          img.style.maxHeight = '80px';
+          img.style.margin = '4px';
+          img.style.objectFit = 'cover';
+          img.alt = 'Miniatura';
+          previewAntes.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+});
+</script>
 <script defer src="main.js?v=1.1.15"></script>
 </body>
 </html>
