@@ -102,7 +102,7 @@ let mdList = [];
 
 
 // ==================== Auth ====================
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async (user) => {
   const loginBtn = document.getElementById("loginBtn");
   const userName = document.getElementById("userName");
 
@@ -110,19 +110,20 @@ auth.onAuthStateChanged(user => {
     loginBtn.style.display = "none";
     userName.textContent = `👋 ${user.displayName}`;
 
-    cargarPerfil(user.email);
+    await cargarPerfil(user.email); // Esperar a que se defina el perfil
     renderFromRealtime();
     solicitarPermisoPush();
 
     // Inicializar selects OT al entrar
     cargarSelectAreasOT();
-    cargarSelectUsuarios("tecnico", selectFirmaTecnico);
-    cargarSelectUsuarios("supervisor", selectFirmaSupervisor);
+    cargarSelectUsuarios("tecnico",   selectFirmaTecnico);
+    cargarSelectUsuarios("supervisor",selectFirmaSupervisor);
     cargarSelectUsuarios("inspector", selectInspeccionVisual);
-
   } else {
     loginBtn.style.display = "block";
     userName.textContent = "";
+    // Ocultar elementos de admin si no hay sesión
+    document.getElementById("navConfiguracion").style.display = "none";
   }
 });
 
@@ -131,15 +132,32 @@ document.getElementById("loginBtn").addEventListener("click", () => {
   auth.signInWithPopup(prov).catch(() => showToast("Error login"));
 });
 
-function cargarPerfil(email) {
-  const safe = email.replace(/\./g, "%2E");
-  db.ref(`usuarios/${safe}`).once("value", snap => {
-    perfilUsuario = snap.val() || { rol: "operador" };
-    showToast(`Rol: ${perfilUsuario.rol}`);
-    if (!["admin","supervisor"].includes(perfilUsuario.rol)) {
-      document.getElementById("exportarZipBtn").style.display = "none";
+async function cargarPerfil(email) {
+  const superAdminEmail = "nejapamanttosigma@gmail.com";
+  let isAdmin = false;
+
+  // 1. Verificar si el correo es el del superadministrador
+  if (email === superAdminEmail) {
+    isAdmin = true;
+  } else {
+    // 2. Si no, verificar si el correo existe en la base de datos de usuarios (técnicos)
+    const usuariosRef = db.ref("master/usuarios");
+    const snap = await usuariosRef.orderByChild("email").equalTo(email).once("value");
+    if (snap.exists()) {
+      isAdmin = true;
     }
-  });
+  }
+
+  // 3. Asignar perfil y actualizar la interfaz de usuario según el estado de administrador
+  if (isAdmin) {
+    perfilUsuario = { rol: "admin", email: email };
+    showToast(`Acceso de Administrador concedido`);
+    document.getElementById("navConfiguracion").style.display = "block";
+  } else {
+    perfilUsuario = { rol: "operador" };
+    showToast(`Rol: Operador (acceso limitado)`);
+    document.getElementById("navConfiguracion").style.display = "none";
+  }
 }
 
 function solicitarPermisoPush(){
@@ -613,18 +631,29 @@ const formUsuario        = document.getElementById("formUsuario");
 const inputUsuarioName   = document.getElementById("usuarioName");
 const selectUsuarioRole  = document.getElementById("usuarioRole");
 const divAreaUsuario     = document.getElementById("areaSelectorUsuario");
+const divUsuarioEmail    = document.getElementById("divUsuarioEmail");
 const selectUsuarioArea  = document.getElementById("usuarioArea");
 const btnCancelUsuario   = document.getElementById("btnCancelUsuario");
 const tableUsuariosBody  = document.querySelector("#tableUsuarios tbody");
 let editUsuarioKey       = null;
 
 selectUsuarioRole.addEventListener("change", () => {
-  if (selectUsuarioRole.value === "operador") {
-    divAreaUsuario.classList.remove("hidden");
+  const rolSeleccionado = selectUsuarioRole.value;
+
+  // Lógica para el área del operador
+  const esOperador = rolSeleccionado === "operador";
+  divAreaUsuario.classList.toggle("hidden", !esOperador);
+  if (esOperador) {
     cargarAreasEnUsuario();
   } else {
-    divAreaUsuario.classList.add("hidden");
     selectUsuarioArea.innerHTML = "";
+  }
+
+  // Lógica para el correo del técnico
+  const esTecnico = rolSeleccionado === "tecnico";
+  divUsuarioEmail.classList.toggle("hidden", !esTecnico);
+  if (!esTecnico) {
+    document.getElementById("usuarioEmail").value = "";
   }
 });
 
@@ -646,12 +675,13 @@ function cargarUsuarios() {
     tableUsuariosBody.innerHTML = "";
     snap.forEach(child => {
       const key  = child.key;
-      const { name, role, areaId } = child.val();
+      const { name, role, areaId, email } = child.val();
       let areaName = "—";
       if (role === "operador" && areaId) {
         db.ref(`master/areas/${areaId}`).once("value", a => {
-          areaName = a.val().name || "—";
-          tableUsuariosBody.querySelector(`[data-key="${key}"] td.area-cell`).textContent = areaName;
+          areaName = a.val()?.name || "—";
+          const cell = tableUsuariosBody.querySelector(`[data-key="${key}"] td.area-cell`);
+          if (cell) cell.textContent = areaName;
         });
       }
       const tr = document.createElement("tr");
@@ -659,6 +689,7 @@ function cargarUsuarios() {
       tr.innerHTML = `
         <td>${name}</td>
         <td>${role}</td>
+        <td>${email || "—"}</td>
         <td class="area-cell">${areaName}</td>
         <td>
           <button class="editUsuario" data-key="${key}">✏️</button>
@@ -678,37 +709,74 @@ function cargarUsuarios() {
   formUsuario._registered = true;
   formUsuario.addEventListener("submit", async e => {
     e.preventDefault();
+
+    // 1. Capturar datos del formulario
     const name   = inputUsuarioName.value.trim();
     const role   = selectUsuarioRole.value;
+    const email  = document.getElementById("usuarioEmail").value.trim();
     const areaId = role === "operador" ? selectUsuarioArea.value : null;
-    if (!name || !role || (role==="operador" && !areaId)) return;
-    const userData = { name, role };
-    if (areaId) userData.areaId = areaId;
-    if (editUsuarioKey) {
-      await db.ref(`master/usuarios/${editUsuarioKey}`).update(userData);
-      editUsuarioKey = null;
-      btnCancelUsuario.classList.add("hidden");
-    } else {
-      await db.ref("master/usuarios").push(userData);
+
+    // 2. Validación de campos
+    if (!name || !role) {
+      return showToast("Por favor, complete el nombre y el rol.");
     }
-    formUsuario.reset();
-    divAreaUsuario.classList.add("hidden");
-    showToast("Usuario guardado");
-    cargarUsuarios();
+    if (role === "tecnico" && (!email || !email.includes("@"))) {
+      return showToast("Por favor, ingrese un correo electrónico válido para el técnico.");
+    }
+    if (role === "operador" && !areaId) {
+      return showToast("Por favor, seleccione un área para el operador.");
+    }
+
+    // 3. Construir objeto de datos del usuario
+    const userData = { name, role };
+    if (role === "tecnico" && email) {
+      userData.email = email;
+    }
+    if (areaId) {
+      userData.areaId = areaId;
+    }
+
+    try {
+      // 4. Guardar o actualizar en Firebase
+      if (editUsuarioKey) {
+        // Actualizar usuario existente
+        await db.ref(`master/usuarios/${editUsuarioKey}`).update(userData);
+        showToast("Usuario actualizado correctamente.");
+        editUsuarioKey = null; // Limpiar la clave de edición
+        btnCancelUsuario.classList.add("hidden");
+      } else {
+        // Crear nuevo usuario
+        await db.ref("master/usuarios").push(userData);
+        showToast("Usuario guardado correctamente.");
+      }
+
+      // 5. Limpiar formulario y actualizar UI
+      formUsuario.reset();
+      divAreaUsuario.classList.add("hidden");
+      divUsuarioEmail.classList.add("hidden");
+      cargarUsuarios(); // Recargar la tabla de usuarios
+    } catch (error) {
+      console.error("Error al guardar usuario:", error);
+      showToast("Hubo un error al guardar el usuario.");
+    }
   });
 })();
 
 function iniciarEdicionUsuario(key) {
   db.ref(`master/usuarios/${key}`).once("value", snap => {
-    const { name, role, areaId } = snap.val();
+    const { name, role, areaId, email } = snap.val();
     inputUsuarioName.value   = name;
+    document.getElementById("usuarioEmail").value = email || "";
     selectUsuarioRole.value  = role;
-    if (role === "operador") {
-      divAreaUsuario.classList.remove("hidden");
+
+    // Disparar evento para mostrar/ocultar campos condicionales (Área/IMEI)
+    selectUsuarioRole.dispatchEvent(new Event('change'));
+
+    // Poblar campos después de que sean visibles
+    if (role === "operador" && areaId) {
       cargarAreasEnUsuario().then(() => selectUsuarioArea.value = areaId || "");
-    } else {
-      divAreaUsuario.classList.add("hidden");
     }
+
     editUsuarioKey = key;
     btnCancelUsuario.classList.remove("hidden");
   });
@@ -718,6 +786,7 @@ btnCancelUsuario.addEventListener("click", () => {
   editUsuarioKey = null;
   formUsuario.reset();
   divAreaUsuario.classList.add("hidden");
+  divUsuarioEmail.classList.add("hidden");
   btnCancelUsuario.classList.add("hidden");
 });
 
@@ -1649,4 +1718,3 @@ async function exportOtToPDFDirect(ot) {
 document
   .getElementById("btnExportPdf")
   .addEventListener("click", exportOtToPDF);
-

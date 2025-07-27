@@ -511,19 +511,27 @@
 
   <!-- Formulario para Agregar/Editar Usuario -->
   <form id="formUsuario" class="config-form">
-    <label for="usuarioName">Nombre de Usuario:</label>
-    <input type="text" id="usuarioName" name="usuarioName" required>
+    <div class="config-form-group">
+      <label for="usuarioName">Nombre de Usuario:</label>
+      <input type="text" id="usuarioName" name="usuarioName" required>
+    </div>
+    <div id="divUsuarioEmail" class="config-form-group hidden">
+      <label for="usuarioEmail">Correo electrónico (Técnico):</label>
+      <input type="email" id="usuarioEmail" name="usuarioEmail" placeholder="correo@ejemplo.com">
+    </div>
 
-    <label for="usuarioRole">Rol:</label>
-    <select id="usuarioRole" name="usuarioRole" required>
-      <option value="">Seleccione rol</option>
-      <option value="tecnico">Técnico</option>
-      <option value="operador">Operador</option>
-      <option value="supervisor">Supervisor</option>
-      <option value="inspector">Inspector de calidad</option>
-    </select>
+    <div class="config-form-group">
+      <label for="usuarioRole">Rol:</label>
+      <select id="usuarioRole" name="usuarioRole" required>
+        <option value="">Seleccione rol</option>
+        <option value="tecnico">Técnico</option>
+        <option value="operador">Operador</option>
+        <option value="supervisor">Supervisor</option>
+        <option value="inspector">Inspector de calidad</option>
+      </select>
+    </div>
 
-    <div id="areaSelectorUsuario" class="hidden">
+    <div id="areaSelectorUsuario" class="config-form-group hidden">
       <label for="usuarioArea">Área (solo Operador):</label>
       <select id="usuarioArea" name="usuarioArea">
         <!-- Opciones dinámicas -->
@@ -540,6 +548,7 @@
       <tr>
         <th>Nombre</th>
         <th>Rol</th>
+        <th>Correo</th>
         <th>Área</th>
         <th>Acciones</th>
       </tr>

@@ -703,3 +703,13 @@ h1, h2, h3 {
   margin-right: 6px;
   color: inherit;
 }
+.config-form input,
+.config-form select {
+  font-size: 14px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 160px;
+  flex: 1;
+}
+
