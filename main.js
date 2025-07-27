@@ -124,6 +124,7 @@ auth.onAuthStateChanged(async (user) => {
     userName.textContent = "";
     // Ocultar elementos de admin si no hay sesión
     document.getElementById("navConfiguracion").style.display = "none";
+    aplicarVistaPorRol({ rol: 'operador' });
   }
 });
 
@@ -166,6 +167,13 @@ function solicitarPermisoPush(){
     .then(token => console.log("Push token:", token))
     .catch(err => console.log("Sin permiso push", err));
 }
+
+function aplicarVistaPorRol(perfil) {
+  const esOperador = perfil.rol === 'operador';
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = esOperador ? 'none' : '';
+  });
+}
 // ==================== UI Navegación ====================-------------------------------------------------------------------
 const secciones = [
   "seccionFormulario",
@@ -184,6 +192,15 @@ function mostrarSeccion(id){
 }
 document.getElementById("navNuevaOT").addEventListener("click", () => {
   mostrarSeccion("seccionFormulario");
+  document.getElementById("otForm").reset();
+  editKey = null;
+  
+  // Limpiar previews de edición
+  previewAntes.innerHTML = "";
+  previewDespues.innerHTML = "";
+  existingEvidenciasAntes = [];
+  existingEvidenciasDespues = [];
+  aplicarVistaPorRol(perfilUsuario);
   
   // Recarga listas
   cargarSelectAreasOT();
@@ -1048,6 +1065,7 @@ async function editOT(id) {
   const o = otList.find(x => x._id === id);
   editKey = id;
   mostrarSeccion("seccionFormulario");
+  aplicarVistaPorRol({ rol: 'admin' }); // Mostrar todos los campos para editar
   const f = document.getElementById("otForm");
 
   // 1) Precargar selects
