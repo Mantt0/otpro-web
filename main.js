@@ -260,13 +260,6 @@ navMultidisciplinaria.onclick = () => {
   }, 300);
 };
 
-// Dark mode
-document.getElementById("toggleMode").onclick = () => {
-  document.body.classList.toggle("dark");
-  document.getElementById("toggleMode").textContent =
-    document.body.classList.contains("dark") ? '☀️ Modo claro' : '🌙 Modo oscuro';
-};
-
 // Toast
 function showToast(msg="Acción realizada"){
   const t = document.getElementById("toast");
